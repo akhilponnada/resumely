@@ -3,6 +3,8 @@
 import { ResumeData } from "@/lib/types";
 
 export function ResumePreview({ data }: { data: ResumeData }) {
+    const skills = data.skills;
+
     return (
         <div style={{
             background: "#fff",
@@ -42,7 +44,7 @@ export function ResumePreview({ data }: { data: ResumeData }) {
             </div>
 
             {/* EDUCATION */}
-            {data.education?.length > 0 && (
+            {data.education && data.education.length > 0 && (
                 <section>
                     <h2 style={{
                         fontSize: "10px",
@@ -70,7 +72,7 @@ export function ResumePreview({ data }: { data: ResumeData }) {
             )}
 
             {/* SKILLS SUMMARY */}
-            {data.skills && (
+            {skills && (
                 <section>
                     <h2 style={{
                         fontSize: "10px",
@@ -81,34 +83,34 @@ export function ResumePreview({ data }: { data: ResumeData }) {
                         borderBottom: "1px solid #808080",
                     }}>SKILLS SUMMARY</h2>
                     <div style={{ paddingLeft: "10px" }}>
-                        {data.skills.languages?.length > 0 && (
+                        {skills.languages && skills.languages.length > 0 && (
                             <div style={{ fontSize: "9px", marginBottom: "2px" }}>
                                 <span style={{ fontSize: "7px", marginRight: "6px" }}>●</span>
-                                <strong>Languages:</strong> {data.skills.languages.join(", ")}
+                                <strong>Languages:</strong> {skills.languages.join(", ")}
                             </div>
                         )}
-                        {data.skills.frameworks?.length > 0 && (
+                        {skills.frameworks && skills.frameworks.length > 0 && (
                             <div style={{ fontSize: "9px", marginBottom: "2px" }}>
                                 <span style={{ fontSize: "7px", marginRight: "6px" }}>●</span>
-                                <strong>Frameworks:</strong> {data.skills.frameworks.join(", ")}
+                                <strong>Frameworks:</strong> {skills.frameworks.join(", ")}
                             </div>
                         )}
-                        {data.skills.tools?.length > 0 && (
+                        {skills.tools && skills.tools.length > 0 && (
                             <div style={{ fontSize: "9px", marginBottom: "2px" }}>
                                 <span style={{ fontSize: "7px", marginRight: "6px" }}>●</span>
-                                <strong>Tools:</strong> {data.skills.tools.join(", ")}
+                                <strong>Tools:</strong> {skills.tools.join(", ")}
                             </div>
                         )}
-                        {data.skills.libraries?.length > 0 && (
+                        {skills.libraries && skills.libraries.length > 0 && (
                             <div style={{ fontSize: "9px", marginBottom: "2px" }}>
                                 <span style={{ fontSize: "7px", marginRight: "6px" }}>●</span>
-                                <strong>Platforms:</strong> {data.skills.libraries.join(", ")}
+                                <strong>Platforms:</strong> {skills.libraries.join(", ")}
                             </div>
                         )}
-                        {data.skills.soft?.length > 0 && (
+                        {skills.soft && skills.soft.length > 0 && (
                             <div style={{ fontSize: "9px", marginBottom: "2px" }}>
                                 <span style={{ fontSize: "7px", marginRight: "6px" }}>●</span>
-                                <strong>Soft Skills:</strong> {data.skills.soft.join(", ")}
+                                <strong>Soft Skills:</strong> {skills.soft.join(", ")}
                             </div>
                         )}
                     </div>
@@ -116,7 +118,7 @@ export function ResumePreview({ data }: { data: ResumeData }) {
             )}
 
             {/* WORK EXPERIENCE */}
-            {data.experience?.length > 0 && (
+            {data.experience && data.experience.length > 0 && (
                 <section>
                     <h2 style={{
                         fontSize: "10px",
@@ -148,7 +150,7 @@ export function ResumePreview({ data }: { data: ResumeData }) {
             )}
 
             {/* PROJECTS */}
-            {data.projects?.length > 0 && (
+            {data.projects && data.projects.length > 0 && (
                 <section>
                     <h2 style={{
                         fontSize: "10px",
@@ -180,7 +182,7 @@ export function ResumePreview({ data }: { data: ResumeData }) {
             )}
 
             {/* CERTIFICATES */}
-            {data.certifications?.length > 0 && (
+            {data.certifications && data.certifications.length > 0 && (
                 <section>
                     <h2 style={{
                         fontSize: "10px",
