@@ -40,6 +40,7 @@ export interface Certification {
     issuer?: string;
     date?: string;
     link?: string;
+    highlights?: string[];
 }
 
 export interface ResumeData {
