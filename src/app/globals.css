@@ -1,26 +1,538 @@
 @import "tailwindcss";
 
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --geist-foreground: #000;
+  --geist-background: #fff;
+  --accents-1: #fafafa;
+  --accents-2: #eaeaea;
+  --accents-3: #999;
+  --accents-4: #888;
+  --accents-5: #666;
+  --accents-6: #444;
+  --accents-7: #333;
+  --accents-8: #111;
+  --violet: #7c3aed;
+  --violet-light: #a78bfa;
+  --violet-dark: #5b21b6;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+html,
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, "Helvetica Neue", sans-serif;
+  background: var(--geist-background);
+  color: var(--geist-foreground);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--accents-2);
+  border-radius: 4px;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* Layout */
+.sidebar {
+  position: fixed;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 260px;
+  background: var(--accents-1);
+  border-right: 1px solid var(--accents-2);
+  display: flex;
+  flex-direction: column;
+  z-index: 100;
+}
+
+.main-content {
+  margin-left: 260px;
+  min-height: 100vh;
+}
+
+.page-container {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 40px 48px;
+}
+
+.page-container-narrow {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 40px 48px;
+}
+
+/* Buttons */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 40px;
+  padding: 0 16px;
+  font-size: 14px;
+  font-weight: 500;
+  border-radius: 8px;
+  border: 1px solid var(--accents-2);
+  background: var(--geist-background);
+  color: var(--geist-foreground);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn:hover {
+  background: var(--accents-1);
+  border-color: var(--geist-foreground);
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-primary {
+  background: var(--geist-foreground);
+  color: var(--geist-background);
+  border-color: var(--geist-foreground);
+}
+
+.btn-primary:hover {
+  background: var(--accents-7);
+}
+
+.btn-violet {
+  background: var(--violet);
+  color: white;
+  border-color: var(--violet);
+}
+
+.btn-violet:hover {
+  background: var(--violet-dark);
+}
+
+.btn-ghost {
+  border: none;
+  background: transparent;
+}
+
+.btn-ghost:hover {
+  background: var(--accents-1);
+}
+
+/* Inputs */
+.input {
+  width: 100%;
+  height: 44px;
+  padding: 0 14px;
+  font-size: 14px;
+  border: 1px solid var(--accents-2);
+  border-radius: 8px;
+  background: var(--geist-background);
+  color: var(--geist-foreground);
+  outline: none;
+  transition: border-color 0.15s ease;
+}
+
+.input:focus {
+  border-color: var(--geist-foreground);
+}
+
+.input::placeholder {
+  color: var(--accents-4);
+}
+
+.textarea {
+  width: 100%;
+  padding: 14px;
+  font-size: 14px;
+  font-family: inherit;
+  line-height: 1.6;
+  border: 1px solid var(--accents-2);
+  border-radius: 8px;
+  background: var(--geist-background);
+  color: var(--geist-foreground);
+  outline: none;
+  resize: vertical;
+  min-height: 200px;
+}
+
+.textarea:focus {
+  border-color: var(--geist-foreground);
+}
+
+.textarea::placeholder {
+  color: var(--accents-4);
+}
+
+/* Cards */
+.card {
+  background: var(--geist-background);
+  border: 1px solid var(--accents-2);
+  border-radius: 12px;
+  padding: 24px;
+  transition: all 0.15s ease;
+}
+
+.card:hover {
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+}
+
+/* Badge */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  height: 24px;
+  padding: 0 10px;
+  font-size: 12px;
+  font-weight: 500;
+  border-radius: 12px;
+  background: var(--accents-1);
+}
+
+.badge-success {
+  background: #d3f9d8;
+  color: #087f5b;
+}
+
+.badge-warning {
+  background: #fff3bf;
+  color: #e67700;
+}
+
+.badge-error {
+  background: #ffe3e3;
+  color: #c92a2a;
+}
+
+/* Tabs */
+.tabs {
+  display: flex;
+  gap: 0;
+  border-bottom: 1px solid var(--accents-2);
+  margin-bottom: 24px;
+}
+
+.tab {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 12px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--accents-5);
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.tab:hover {
+  color: var(--geist-foreground);
+}
+
+.tab.active {
+  color: var(--geist-foreground);
+  border-bottom-color: var(--geist-foreground);
+}
+
+/* Loader */
+.loader {
+  width: 20px;
+  height: 20px;
+  border: 2px solid var(--accents-2);
+  border-top-color: var(--geist-foreground);
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+}
+
+/* Grid */
+.grid-3 {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+/* Nav */
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
+  font-size: 14px;
+  color: var(--accents-5);
+  border-radius: 8px;
+  transition: all 0.15s ease;
+}
+
+.nav-item:hover {
+  background: var(--geist-background);
+  color: var(--geist-foreground);
+}
+
+.nav-item.active {
+  background: var(--geist-background);
+  color: var(--geist-foreground);
+  font-weight: 500;
+}
+
+/* Upload */
+.upload-zone {
+  border: 2px dashed var(--accents-2);
+  border-radius: 12px;
+  padding: 32px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.upload-zone:hover,
+.upload-zone.active {
+  border-color: var(--violet);
+  background: rgba(124, 58, 237, 0.04);
+}
+
+/* Resume Preview */
+.resume-preview {
+  background: white;
+  color: #000;
+  padding: 0.5in;
+  font-family: "Times New Roman", Times, serif;
+  font-size: 10pt;
+  line-height: 1.3;
+  max-width: 8.5in;
+  min-height: 11in;
+  margin: 0 auto;
+}
+
+.resume-preview h1 {
+  font-size: 24pt;
+  font-weight: bold;
+  text-align: center;
+  margin-bottom: 4px;
+  font-variant: small-caps;
+  letter-spacing: 1px;
+}
+
+.resume-preview .contact {
+  text-align: center;
+  font-size: 10pt;
+  margin-bottom: 8px;
+}
+
+.resume-preview .contact a {
+  color: #000;
+  text-decoration: underline;
+}
+
+.resume-preview h2 {
+  font-size: 10pt;
+  font-weight: normal;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin: 12px 0 4px;
+  padding-bottom: 2px;
+  border-bottom: 0.5px solid #000;
+  font-variant: small-caps;
+}
+
+.resume-preview .entry {
+  margin-bottom: 6px;
+}
+
+.resume-preview .entry-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+
+.resume-preview .entry-title {
+  font-weight: bold;
+  font-size: 10pt;
+}
+
+.resume-preview .entry-date {
+  font-size: 10pt;
+  font-style: italic;
+}
+
+.resume-preview .entry-sub {
+  font-size: 10pt;
+  font-style: italic;
+}
+
+.resume-preview ul {
+  margin: 2px 0;
+  padding-left: 16px;
+}
+
+.resume-preview li {
+  font-size: 10pt;
+  margin-bottom: 1px;
+}
+
+.resume-preview .skills-row {
+  font-size: 10pt;
+  margin-bottom: 2px;
+}
+
+/* Chat */
+.chat-page {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
+.chat-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 32px;
+}
+
+.chat-center {
+  max-width: 720px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.chat-message {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 32px;
+}
+
+.chat-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.chat-avatar-user {
+  background: var(--geist-foreground);
+  color: var(--geist-background);
+}
+
+.chat-avatar-ai {
+  background: rgba(124, 58, 237, 0.1);
+  color: var(--violet);
+}
+
+.chat-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.chat-role {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--accents-5);
+  margin-bottom: 4px;
+}
+
+.chat-text {
+  font-size: 15px;
+  line-height: 1.7;
+  color: var(--geist-foreground);
+  white-space: pre-wrap;
+}
+
+.chat-input-container {
+  border-top: 1px solid var(--accents-2);
+  padding: 20px 32px 28px;
+  background: var(--geist-background);
+}
+
+.chat-input-wrapper {
+  max-width: 720px;
+  margin: 0 auto;
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+}
+
+.chat-input {
+  flex: 1;
+  padding: 14px 56px 14px 18px;
+  font-size: 15px;
+  font-family: inherit;
+  border: 1px solid var(--accents-2);
+  border-radius: 24px;
+  outline: none;
+  resize: none;
+  min-height: 52px;
+  max-height: 200px;
+  background: var(--accents-1);
+  color: var(--geist-foreground);
+  transition: all 0.15s ease;
+}
+
+.chat-input:focus {
+  border-color: var(--accents-4);
+  background: var(--geist-background);
+}
+
+.chat-input::placeholder {
+  color: var(--accents-4);
+}
+
+.chat-send-btn {
+  position: absolute;
+  right: 10px;
+  bottom: 10px;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: var(--geist-foreground);
+  color: var(--geist-background);
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+
+.chat-send-btn:hover {
+  background: var(--accents-7);
+}
+
+.chat-send-btn:disabled {
+  background: var(--accents-3);
+  cursor: not-allowed;
+}
+
+.chat-footer {
+  text-align: center;
+  font-size: 12px;
+  color: var(--accents-4);
+  margin-top: 12px;
 }
