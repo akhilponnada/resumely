@@ -59,6 +59,7 @@ export const createResume = mutation({
         jobDescription: v.optional(v.string()),
         atsScore: v.optional(v.number()),
         resumeData: resumeDataValidator,
+        docxStatus: v.optional(v.string()),
     },
     handler: async (ctx, args) => {
         const now = Date.now();
@@ -69,8 +70,24 @@ export const createResume = mutation({
             jobDescription: args.jobDescription,
             atsScore: args.atsScore,
             resumeData: args.resumeData,
+            docxStatus: args.docxStatus || "pending",
             createdAt: now,
             updatedAt: now,
+        });
+    },
+});
+
+export const updateDocxStatus = mutation({
+    args: {
+        id: v.id("resumes"),
+        docxStatus: v.string(),
+        docxError: v.optional(v.string()),
+    },
+    handler: async (ctx, args) => {
+        await ctx.db.patch(args.id, {
+            docxStatus: args.docxStatus,
+            docxError: args.docxError,
+            updatedAt: Date.now(),
         });
     },
 });

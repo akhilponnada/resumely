@@ -5,7 +5,7 @@ import { useUser } from "@clerk/nextjs";
 import { useQuery } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import Link from "next/link";
-import { Plus, FileText, TrendingUp, Clock, ArrowRight } from "lucide-react";
+import { Plus, FileText, TrendingUp, Clock, ArrowRight, Sparkles } from "lucide-react";
 
 export default function Dashboard() {
     const { user } = useUser();
@@ -16,9 +16,49 @@ export default function Dashboard() {
         ? Math.round(resumes.reduce((acc, r) => acc + (r.atsScore || 0), 0) / resumes.length)
         : 0;
 
+    // Special message for Nagasri/Arvapalli
+    const userName = (user?.firstName || "") + " " + (user?.lastName || "");
+    const userNameLower = userName.toLowerCase();
+    const isSpecialUser = userNameLower.includes("nagasri") ||
+                          userNameLower.includes("naga sri") ||
+                          userNameLower.includes("arvapalli");
+
     return (
         <DashboardLayout>
             <div className="page-container">
+                {/* Special Message for Nagasri/Arvapalli */}
+                {isSpecialUser && (
+                    <div style={{
+                        marginBottom: "24px",
+                        padding: "20px 24px",
+                        background: "linear-gradient(135deg, rgba(124, 58, 237, 0.1) 0%, rgba(236, 72, 153, 0.1) 100%)",
+                        borderRadius: "16px",
+                        border: "1px solid rgba(124, 58, 237, 0.2)",
+                    }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                            <div style={{
+                                width: "48px",
+                                height: "48px",
+                                borderRadius: "12px",
+                                background: "linear-gradient(135deg, var(--violet), #ec4899)",
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                            }}>
+                                <Sparkles size={24} color="white" />
+                            </div>
+                            <div>
+                                <div style={{ fontSize: "18px", fontWeight: 600, marginBottom: "4px", color: "var(--violet-dark)" }}>
+                                    Gurujiii! You got this!
+                                </div>
+                                <div style={{ fontSize: "14px", color: "var(--accents-6)" }}>
+                                    Apply to 5 jobs today and then you can relax. Small steps lead to big wins!
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
                 {/* Header */}
                 <div style={{ marginBottom: "32px" }}>
                     <h1 style={{ fontSize: "28px", fontWeight: 600, marginBottom: "4px" }}>

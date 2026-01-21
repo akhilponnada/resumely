@@ -12,29 +12,35 @@ const claude = new AnthropicFoundry({
 });
 
 // =============================================================================
-// CLAUDE DOCX SKILL
-// Claude Opus generates the DOCX structure using its knowledge of the docx library
+// CLAUDE DOCX SKILL - Generate actual docx library code
+// Claude Opus uses its knowledge of the docx npm library to generate code
 // Reference: https://github.com/anthropics/skills/tree/main/skills/docx
 // =============================================================================
 
 const DOCX_SKILL_PROMPT = `---
 name: docx-resume-generator
-description: Generate professional DOCX resume using the docx npm library
+description: Generate professional DOCX resume code using the docx npm library
 ---
 
 # DOCX Resume Generator Skill
 
-You are an expert at generating Word documents using the \`docx\` npm library. Your task is to generate a JSON structure that represents a professional resume document.
+You are an expert at generating Word documents using the \`docx\` npm library. Your task is to generate JavaScript code that creates a professional resume document.
+
+## Available Imports (already imported for you)
+\`\`\`javascript
+const { Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell,
+        AlignmentType, LevelFormat, BorderStyle, WidthType,
+        HeadingLevel, ExternalHyperlink, convertInchesToTwip } = require('docx');
+\`\`\`
 
 ## Template Requirements (MUST MATCH EXACTLY)
-
-The resume must look like this reference template:
 
 ### HEADER
 - Left side: FULL NAME (uppercase, bold, 14pt), then LinkedIn link below, then GitHub link below
 - Right side: "Email: " + clickable email, "Mobile: " + phone number
 - LinkedIn format: "LastName | LinkedIn" (blue, underlined, clickable)
 - GitHub format: "username (github.com)" (blue, underlined, clickable)
+- Use a 2-column table with no borders
 
 ### SECTION HEADERS
 - Centered, bold, 10pt
@@ -44,192 +50,106 @@ The resume must look like this reference template:
 ### EDUCATION
 - Row 1: Institution (bold) on left | Location (bold) on right
 - Row 2: Degree; GPA: X.XX (italic) on left | Dates (bold) on right
+- Use borderless tables for alignment
 
 ### SKILLS SUMMARY
 - Bullet format: ● Category: skill1, skill2, skill3
 - Categories: Languages, Frameworks, Tools, Platforms, Soft Skills
 
 ### WORK EXPERIENCE
-- Header: POSITION | COMPANY | LINK (uppercase, bold) | Dates (bold, right-aligned)
+- Header: POSITION | COMPANY | LINK (bold, blue clickable) | Dates (bold, right-aligned)
 - Bullet points with ○ (open circle) for each achievement
 
 ### PROJECTS
-- Header: Project Name | LINK (bold) | Dates (bold, right-aligned)
+- Header: Project Name | LINK (bold, blue clickable) | Dates (bold, right-aligned)
 - Bullet points with ○ for each achievement
 
 ### CERTIFICATES
-- Header: Certificate Name (Issuer) | CERTIFICATE (bold) | Date (bold, right-aligned)
+- Header: Certificate Name (Issuer) | CERTIFICATE link (bold, blue) | Date (bold, right-aligned)
 - Bullet points with ○ for highlights if any
+
+## Style Constants to Use
+\`\`\`javascript
+const LINK_COLOR = "2563EB";
+const SECTION_LINE_COLOR = "808080";
+const TEXT_COLOR = "000000";
+const FONT = "Calibri";
+const FONT_SIZE_NAME = 28;    // 14pt
+const FONT_SIZE_SECTION = 20; // 10pt
+const FONT_SIZE_NORMAL = 18;  // 9pt
+const FONT_SIZE_SMALL = 16;   // 8pt
+const noBorder = { style: BorderStyle.NONE, size: 0, color: "FFFFFF" };
+const noBorders = { top: noBorder, bottom: noBorder, left: noBorder, right: noBorder };
+\`\`\`
 
 ## Output Format
 
-Return a JSON object with this exact structure that represents the document:
+Return ONLY valid JavaScript code that:
+1. Creates a \`children\` array of Paragraph and Table elements
+2. Creates the Document with proper margins (0.5 inch all around)
+3. Exports the document
 
-\`\`\`json
-{
-  "sections": [
-    {
-      "type": "header",
-      "fullName": "FULL NAME",
-      "linkedin": { "text": "LastName | LinkedIn", "url": "https://..." },
-      "github": { "text": "username (github.com)", "url": "https://..." },
-      "email": { "text": "email@example.com", "url": "mailto:..." },
-      "phone": "+91 XXXXXXXXXX"
-    },
-    {
-      "type": "education",
-      "items": [
-        {
-          "institution": "University Name",
-          "location": "City, Country",
-          "degree": "Degree; GPA: X.XX",
-          "dates": "Month Year - Month Year"
-        }
-      ]
-    },
-    {
-      "type": "skills",
-      "categories": [
-        { "label": "Languages", "items": ["Python", "SQL", "Java"] },
-        { "label": "Frameworks", "items": ["React", "Node.js"] }
-      ]
-    },
-    {
-      "type": "experience",
-      "items": [
-        {
-          "position": "JOB TITLE",
-          "company": "COMPANY NAME",
-          "link": "https://...",
-          "dates": "Month Year - Month Year",
-          "highlights": ["Achievement 1", "Achievement 2"]
-        }
-      ]
-    },
-    {
-      "type": "projects",
-      "items": [
-        {
-          "name": "Project Name",
-          "link": "https://...",
-          "dates": "Month Year - Month Year",
-          "highlights": ["Achievement 1", "Achievement 2"]
-        }
-      ]
-    },
-    {
-      "type": "certificates",
-      "items": [
-        {
-          "name": "Certificate Name",
-          "issuer": "Issuing Organization",
-          "link": "https://...",
-          "date": "Month Year",
-          "highlights": ["Key learning 1"]
-        }
-      ]
-    }
-  ]
-}
+Your code should look like this structure:
+\`\`\`javascript
+const children = [];
+
+// Header section
+children.push(new Table({ ... }));
+
+// Education section
+children.push(new Paragraph({ ... })); // section header
+// ... education items
+
+// Skills section
+// ... etc
+
+const doc = new Document({
+    sections: [{
+        properties: {
+            page: {
+                margin: {
+                    top: convertInchesToTwip(0.5),
+                    right: convertInchesToTwip(0.5),
+                    bottom: convertInchesToTwip(0.5),
+                    left: convertInchesToTwip(0.5),
+                },
+            },
+        },
+        children,
+    }],
+});
+
+module.exports = doc;
 \`\`\`
 
 ## Important Rules
 1. UPPERCASE the full name, position titles, and company names
-2. Format dates consistently as "Month Year - Month Year" or "Month Year- Present"
-3. Make all links clickable (include full URLs)
+2. Format dates consistently as "Month Year - Month Year" or "Month Year - Present"
+3. Make all links clickable using ExternalHyperlink
 4. Use strong action verbs for highlights
-5. Include metrics/numbers in achievements where available
-6. Return ONLY the JSON, no markdown code blocks`;
-
-export interface DocxStructure {
-    sections: DocxSection[];
-}
-
-export type DocxSection =
-    | HeaderSection
-    | EducationSection
-    | SkillsSection
-    | ExperienceSection
-    | ProjectsSection
-    | CertificatesSection;
-
-interface HeaderSection {
-    type: "header";
-    fullName: string;
-    linkedin?: { text: string; url: string };
-    github?: { text: string; url: string };
-    email?: { text: string; url: string };
-    phone?: string;
-}
-
-interface EducationSection {
-    type: "education";
-    items: {
-        institution: string;
-        location: string;
-        degree: string;
-        dates: string;
-    }[];
-}
-
-interface SkillsSection {
-    type: "skills";
-    categories: {
-        label: string;
-        items: string[];
-    }[];
-}
-
-interface ExperienceSection {
-    type: "experience";
-    items: {
-        position: string;
-        company: string;
-        link?: string;
-        dates: string;
-        highlights: string[];
-    }[];
-}
-
-interface ProjectsSection {
-    type: "projects";
-    items: {
-        name: string;
-        link?: string;
-        dates: string;
-        highlights: string[];
-    }[];
-}
-
-interface CertificatesSection {
-    type: "certificates";
-    items: {
-        name: string;
-        issuer: string;
-        link?: string;
-        date: string;
-        highlights?: string[];
-    }[];
-}
+5. Return ONLY the JavaScript code, no markdown code blocks
+6. The code must be valid and executable
+7. Handle missing/optional data gracefully (check if fields exist before using)`;
 
 /**
- * Use Claude Opus to generate the DOCX structure based on resume data
+ * Use Claude Opus to generate actual docx library code
  */
-export async function generateDocxStructureWithClaude(data: ResumeData): Promise<DocxStructure> {
-    const userMessage = `Generate a DOCX structure for this resume data:
+export async function generateDocxCodeWithClaude(data: ResumeData): Promise<string> {
+    const userMessage = `Generate JavaScript code using the docx library to create a resume for this data:
 
 ${JSON.stringify(data, null, 2)}
 
 Remember to:
-1. UPPERCASE the full name, positions, and company names
-2. Format LinkedIn as "LastName | LinkedIn"
-3. Format GitHub as "username (github.com)"
-4. Include all sections even if empty (use empty arrays)
-5. Return ONLY valid JSON`;
+1. UPPERCASE the full name: "${(data.fullName || "").toUpperCase()}"
+2. Format LinkedIn as "LastName | LinkedIn" where LastName is "${(data.fullName || "").split(" ").pop()}"
+3. Format GitHub as "username (github.com)" where username is extracted from the github URL
+4. Handle missing fields gracefully (check if they exist)
+5. Return ONLY valid JavaScript code that creates the document
+6. Do NOT include markdown code blocks - just raw JavaScript`;
 
     const response = await claude.messages.create({
         model: "claude-opus-4-5",
-        max_tokens: 8000,
+        max_tokens: 16000,
         system: DOCX_SKILL_PROMPT,
         messages: [{ role: "user", content: userMessage }],
     });
@@ -239,19 +159,14 @@ Remember to:
         throw new Error("Unexpected response format from Claude");
     }
 
-    // Parse JSON response
-    let jsonStr = content.text.trim();
+    // Extract code from response (remove markdown if present)
+    let code = content.text.trim();
 
-    // Remove markdown code blocks if present
-    const jsonMatch = jsonStr.match(/```(?:json)?\s*([\s\S]*?)```/);
-    if (jsonMatch) {
-        jsonStr = jsonMatch[1].trim();
+    // Remove markdown code blocks if Claude included them
+    const codeMatch = code.match(/```(?:javascript|js)?\s*([\s\S]*?)```/);
+    if (codeMatch) {
+        code = codeMatch[1].trim();
     }
 
-    try {
-        return JSON.parse(jsonStr) as DocxStructure;
-    } catch (error) {
-        console.error("Failed to parse Claude response:", content.text);
-        throw new Error("Failed to parse DOCX structure from Claude");
-    }
+    return code;
 }

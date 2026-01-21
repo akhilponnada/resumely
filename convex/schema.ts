@@ -14,6 +14,9 @@ export default defineSchema({
     rawInput: v.string(),
     jobDescription: v.optional(v.string()),
     atsScore: v.optional(v.number()),
+    // DOCX generation status: pending, generating, ready, failed
+    docxStatus: v.optional(v.string()),
+    docxError: v.optional(v.string()),
     resumeData: v.object({
       fullName: v.string(),
       email: v.string(),
