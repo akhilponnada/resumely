@@ -127,7 +127,15 @@ const SYSTEM_PROMPT = `You are an expert resume parser. Extract and structure re
       "platforms": [],
       "soft": ["Communication", "Customer Service"]
     },
-    "certifications": []
+    "certifications": [
+      {
+        "name": "Python for Data Science",
+        "issuer": "IBM",
+        "date": "January 2024",
+        "link": "",
+        "highlights": []
+      }
+    ]
   },
   "atsScore": 85,
   "atsAnalysis": {
@@ -138,7 +146,66 @@ const SYSTEM_PROMPT = `You are an expert resume parser. Extract and structure re
   "suggestedTitle": "Job Title Resume"
 }
 
-REMEMBER: All text must have proper spacing between words. Never concatenate words together.`;
+REMEMBER: All text must have proper spacing between words. Never concatenate words together.
+IMPORTANT: certifications must be an array of OBJECTS, not strings. Each certification needs name, issuer, date fields.`;
+
+// Normalize/fix common AI response issues
+function normalizeResumeData(data: Record<string, unknown>): Record<string, unknown> {
+  const resumeData = data.resumeData as Record<string, unknown> || data;
+
+  // Fix certifications if they're strings instead of objects
+  if (resumeData.certifications && Array.isArray(resumeData.certifications)) {
+    resumeData.certifications = resumeData.certifications.map((cert: unknown) => {
+      if (typeof cert === 'string') {
+        // Parse string like "Python for Data Science (IBM)" into object
+        const match = cert.match(/^(.+?)\s*\(([^)]+)\)$/);
+        if (match) {
+          return { name: match[1].trim(), issuer: match[2].trim(), date: "", link: "", highlights: [] };
+        }
+        return { name: cert, issuer: "", date: "", link: "", highlights: [] };
+      }
+      // Ensure required fields exist
+      const certObj = cert as Record<string, unknown>;
+      return {
+        name: certObj.name || "",
+        issuer: certObj.issuer || "",
+        date: certObj.date || "",
+        link: certObj.link || "",
+        highlights: certObj.highlights || []
+      };
+    });
+  } else {
+    resumeData.certifications = [];
+  }
+
+  // Ensure arrays exist
+  if (!resumeData.education) resumeData.education = [];
+  if (!resumeData.experience) resumeData.experience = [];
+  if (!resumeData.projects) resumeData.projects = [];
+
+  // Ensure skills object exists
+  if (!resumeData.skills || typeof resumeData.skills !== 'object') {
+    resumeData.skills = { languages: [], frameworks: [], tools: [], platforms: [], soft: [] };
+  }
+
+  // Ensure experience highlights are arrays
+  if (Array.isArray(resumeData.experience)) {
+    resumeData.experience = (resumeData.experience as Record<string, unknown>[]).map(exp => ({
+      ...exp,
+      highlights: Array.isArray(exp.highlights) ? exp.highlights : []
+    }));
+  }
+
+  // Ensure project highlights are arrays
+  if (Array.isArray(resumeData.projects)) {
+    resumeData.projects = (resumeData.projects as Record<string, unknown>[]).map(proj => ({
+      ...proj,
+      highlights: Array.isArray(proj.highlights) ? proj.highlights : []
+    }));
+  }
+
+  return data;
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -192,10 +259,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "No response from AI" }, { status: 500 });
     }
 
-    // Parse JSON response
+    // Parse JSON response and normalize data
     try {
       const parsed = JSON.parse(content);
-      return NextResponse.json(parsed);
+      const normalized = normalizeResumeData(parsed);
+      return NextResponse.json(normalized);
     } catch (parseError) {
       console.error("Failed to parse AI response:", parseError);
       return NextResponse.json({ error: "Failed to parse response" }, { status: 500 });
