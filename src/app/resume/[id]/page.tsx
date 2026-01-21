@@ -80,7 +80,8 @@ export default function ResumeViewPage({ params }: { params: Promise<{ id: strin
                                     display: "flex",
                                     alignItems: "center",
                                     gap: "8px",
-                                    padding: "10px 14px",
+                                    padding: "0 16px",
+                                    height: "40px",
                                     background: atsBg,
                                     borderRadius: "8px"
                                 }}>
@@ -89,7 +90,7 @@ export default function ResumeViewPage({ params }: { params: Promise<{ id: strin
                                 </div>
                             )}
 
-                            <button onClick={downloadDOCX} disabled={downloading} className="btn btn-primary">
+                            <button onClick={downloadDOCX} disabled={downloading} className="btn btn-primary" style={{ height: "40px" }}>
                                 {downloading ? <Loader2 size={16} className="loader" /> : <FileType size={16} />}
                                 {downloading ? "Generating..." : "Download DOCX"}
                             </button>
