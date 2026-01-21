@@ -36,6 +36,7 @@ export default defineSchema({
         location: v.optional(v.string()),
         startDate: v.optional(v.string()),
         endDate: v.optional(v.string()),
+        link: v.optional(v.string()),
         highlights: v.array(v.string()),
       })),
       projects: v.array(v.object({
@@ -50,6 +51,7 @@ export default defineSchema({
         languages: v.optional(v.array(v.string())),
         frameworks: v.optional(v.array(v.string())),
         tools: v.optional(v.array(v.string())),
+        platforms: v.optional(v.array(v.string())),
         libraries: v.optional(v.array(v.string())),
         soft: v.optional(v.array(v.string())),
       }),
@@ -58,6 +60,7 @@ export default defineSchema({
         issuer: v.optional(v.string()),
         date: v.optional(v.string()),
         link: v.optional(v.string()),
+        highlights: v.optional(v.array(v.string())),
       }))),
     }),
     createdAt: v.number(),
