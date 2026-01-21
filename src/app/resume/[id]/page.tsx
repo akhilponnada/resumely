@@ -6,7 +6,6 @@ import { DashboardLayout } from "@/components/DashboardLayout";
 import { ResumePreview } from "@/components/ResumePreview";
 import { useQuery } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
-import { generateDOCX } from "@/lib/docx-generator";
 import { saveAs } from "file-saver";
 import { ArrowLeft, FileType, Loader2, Eye, Code, Check, AlertTriangle } from "lucide-react";
 import { Id } from "../../../../convex/_generated/dataModel";
@@ -23,10 +22,22 @@ export default function ResumeViewPage({ params }: { params: Promise<{ id: strin
         if (!resume) return;
         setDownloading(true);
         try {
-            const blob = await generateDOCX(resume.resumeData);
+            // Call server API to generate DOCX (Claude runs server-side)
+            const response = await fetch("/api/generate-docx", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ resumeData: resume.resumeData }),
+            });
+
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.error || "Failed to generate DOCX");
+            }
+
+            const blob = await response.blob();
             saveAs(blob, `${resume.resumeData.fullName.replace(/\s+/g, "_")}_Resume.docx`);
-        } catch {
-            alert("Failed to generate DOCX");
+        } catch (err) {
+            alert(err instanceof Error ? err.message : "Failed to generate DOCX");
         } finally {
             setDownloading(false);
         }
