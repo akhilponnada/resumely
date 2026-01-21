@@ -37,7 +37,8 @@
       "Bash(git commit -m \"$\\(cat <<''EOF''\nrevert: Use hardcoded DOCX generator, remove Claude Opus\n\n- Reverted to simple hardcoded DOCX template generation\n- Removed Claude Opus dependency \\(no longer needed\\)\n- GPT-5-mini handles all AI work \\(extraction + chat\\)\n- Faster DOCX generation \\(instant, no AI wait\\)\n- Kept: favicon, Nagasri special message, all other features\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
       "Bash(git commit -m \"fix: Align ATS badge and download button heights\")",
       "Bash(git commit -m \"fix: PDF parser was removing spaces between words - critical bug\")",
-      "Bash(git commit -m \"fix: Add data normalization to handle malformed AI responses\n\n- Fix certifications when returned as strings instead of objects\n- Auto-convert ''Cert Name \\(Issuer\\)'' string to proper object\n- Ensure all required arrays exist\n- Ensure highlights are always arrays\")"
+      "Bash(git commit -m \"fix: Add data normalization to handle malformed AI responses\n\n- Fix certifications when returned as strings instead of objects\n- Auto-convert ''Cert Name \\(Issuer\\)'' string to proper object\n- Ensure all required arrays exist\n- Ensure highlights are always arrays\")",
+      "Bash(git commit -m \"fix: Add timeout to PDF parsing to prevent hanging\")"
     ]
   }
 }

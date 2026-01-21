@@ -3,30 +3,37 @@ import { auth } from "@clerk/nextjs/server";
 import mammoth from "mammoth";
 import PDFParser from "pdf2json";
 
+export const maxDuration = 30; // 30 second timeout
+
 // Max file size: 5MB
 const MAX_FILE_SIZE = 5 * 1024 * 1024;
 
 // Allowed extensions
 const ALLOWED_EXTENSIONS = [".pdf", ".docx", ".txt", ".md"];
 
-// Parse PDF using pdf2json
+// Parse PDF using pdf2json with timeout
 function parsePDF(buffer: Buffer): Promise<string> {
     return new Promise((resolve, reject) => {
+        // 15 second timeout for PDF parsing
+        const timeout = setTimeout(() => {
+            reject(new Error("PDF parsing timed out. Please try a smaller file or paste your information manually."));
+        }, 15000);
+
         const pdfParser = new PDFParser();
 
         pdfParser.on("pdfParser_dataReady", (pdfData) => {
+            clearTimeout(timeout);
             try {
-                // Extract text from all pages with better formatting
+                // Extract text from all pages
                 const pages: string[] = [];
 
                 for (const page of pdfData.Pages) {
                     const lines: { y: number; text: string }[] = [];
 
                     for (const textItem of page.Texts) {
-                        const y = Math.round(textItem.y * 10); // Group by approximate y position
-                        const text = textItem.R.map((r: { T: string }) => decodeURIComponent(r.T)).join("");
+                        const y = Math.round(textItem.y * 10);
+                        const text = textItem.R.map((r: { T: string }) => decodeURIComponent(r.T)).join(" ");
 
-                        // Find existing line at this y position or create new
                         const existingLine = lines.find(l => Math.abs(l.y - y) < 2);
                         if (existingLine) {
                             existingLine.text += " " + text;
@@ -35,7 +42,6 @@ function parsePDF(buffer: Buffer): Promise<string> {
                         }
                     }
 
-                    // Sort lines by y position and join
                     lines.sort((a, b) => a.y - b.y);
                     const pageText = lines.map(l => l.text.trim()).filter(t => t).join("\n");
                     pages.push(pageText);
@@ -48,6 +54,7 @@ function parsePDF(buffer: Buffer): Promise<string> {
         });
 
         pdfParser.on("pdfParser_dataError", (errData) => {
+            clearTimeout(timeout);
             reject(new Error(errData.parserError?.message || "Failed to parse PDF"));
         });
 
