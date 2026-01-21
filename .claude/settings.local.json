@@ -35,7 +35,8 @@
       "Bash(git commit -m \"$\\(cat <<''EOF''\nfix: Move DOCX generation to server-side API route\n\n- Created /api/generate-docx endpoint for server-side generation\n- Removed client-side import of docx-generator \\(caused SDK init error\\)\n- Client now calls API which runs Claude Opus server-side\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
       "Bash(git commit -m \"$\\(cat <<''EOF''\nfeat: Claude generates actual docx code + special features\n\nMajor changes:\n- Claude Opus now generates actual JavaScript code using docx library\n- Code is executed server-side to create Word documents\n- Shows \"Claude is crafting your resume...\" status during generation\n- Added special motivational message for Nagasri/Arvapalli users\n- New favicon matching the sidebar icon \\(violet resume lines\\)\n- Added docxStatus tracking in Convex schema\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
       "Bash(git commit -m \"$\\(cat <<''EOF''\nrevert: Use hardcoded DOCX generator, remove Claude Opus\n\n- Reverted to simple hardcoded DOCX template generation\n- Removed Claude Opus dependency \\(no longer needed\\)\n- GPT-5-mini handles all AI work \\(extraction + chat\\)\n- Faster DOCX generation \\(instant, no AI wait\\)\n- Kept: favicon, Nagasri special message, all other features\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
-      "Bash(git commit -m \"fix: Align ATS badge and download button heights\")"
+      "Bash(git commit -m \"fix: Align ATS badge and download button heights\")",
+      "Bash(git commit -m \"fix: PDF parser was removing spaces between words - critical bug\")"
     ]
   }
 }

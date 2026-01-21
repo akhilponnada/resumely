@@ -127,15 +127,15 @@ export async function POST(req: NextRequest) {
             }
         }
 
-        // Clean up the text - fix common PDF extraction issues
+        // Clean up the text - normalize whitespace only
         text = text
-            // Remove excessive spaces between characters (common in PDFs)
-            .replace(/([a-zA-Z]) {1,3}([a-zA-Z])/g, "$1$2")
             // Fix spaces around punctuation
             .replace(/ +([.,;:!?])/g, "$1")
-            // Normalize whitespace
+            // Normalize line endings
             .replace(/\r\n/g, "\n")
-            .replace(/[ \t]+/g, " ")
+            // Collapse multiple spaces into one (but keep single spaces!)
+            .replace(/[ \t]{2,}/g, " ")
+            // Collapse multiple newlines
             .replace(/\n{3,}/g, "\n\n")
             .trim();
 
