@@ -7,7 +7,7 @@ import { ResumePreview } from "@/components/ResumePreview";
 import { useQuery } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
 import { saveAs } from "file-saver";
-import { ArrowLeft, FileType, Loader2, Eye, Code, Check, AlertTriangle, Sparkles } from "lucide-react";
+import { ArrowLeft, FileType, Loader2, Eye, Code, Check, AlertTriangle } from "lucide-react";
 import { Id } from "../../../../convex/_generated/dataModel";
 
 export default function ResumeViewPage({ params }: { params: Promise<{ id: string }> }) {
@@ -15,17 +15,14 @@ export default function ResumeViewPage({ params }: { params: Promise<{ id: strin
     const router = useRouter();
     const [tab, setTab] = useState<"preview" | "data">("preview");
     const [downloading, setDownloading] = useState(false);
-    const [downloadStatus, setDownloadStatus] = useState("");
 
     const resume = useQuery(api.resumes.getResumeById, { id: id as Id<"resumes"> });
 
     const downloadDOCX = async () => {
         if (!resume) return;
         setDownloading(true);
-        setDownloadStatus("Claude is crafting your resume...");
 
         try {
-            // Call server API to generate DOCX (Claude runs server-side)
             const response = await fetch("/api/generate-docx", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -37,13 +34,10 @@ export default function ResumeViewPage({ params }: { params: Promise<{ id: strin
                 throw new Error(error.error || "Failed to generate DOCX");
             }
 
-            setDownloadStatus("Packaging your document...");
             const blob = await response.blob();
             saveAs(blob, `${resume.resumeData.fullName.replace(/\s+/g, "_")}_Resume.docx`);
-            setDownloadStatus("");
         } catch (err) {
             alert(err instanceof Error ? err.message : "Failed to generate DOCX");
-            setDownloadStatus("");
         } finally {
             setDownloading(false);
         }
@@ -95,18 +89,10 @@ export default function ResumeViewPage({ params }: { params: Promise<{ id: strin
                                 </div>
                             )}
 
-                            <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "6px" }}>
-                                <button onClick={downloadDOCX} disabled={downloading} className="btn btn-primary">
-                                    {downloading ? <Loader2 size={16} className="loader" /> : <FileType size={16} />}
-                                    {downloading ? "Generating..." : "Download DOCX"}
-                                </button>
-                                {downloading && downloadStatus && (
-                                    <div style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "12px", color: "var(--violet)" }}>
-                                        <Sparkles size={12} />
-                                        <span>{downloadStatus}</span>
-                                    </div>
-                                )}
-                            </div>
+                            <button onClick={downloadDOCX} disabled={downloading} className="btn btn-primary">
+                                {downloading ? <Loader2 size={16} className="loader" /> : <FileType size={16} />}
+                                {downloading ? "Generating..." : "Download DOCX"}
+                            </button>
                         </div>
                     </div>
                 </div>

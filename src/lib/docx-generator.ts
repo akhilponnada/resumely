@@ -1,94 +1,419 @@
 import {
     Document,
-    Packer,
     Paragraph,
     TextRun,
     Table,
     TableRow,
     TableCell,
-    AlignmentType,
-    LevelFormat,
-    BorderStyle,
     WidthType,
-    HeadingLevel,
+    AlignmentType,
+    BorderStyle,
+    Packer,
     ExternalHyperlink,
     convertInchesToTwip,
 } from "docx";
 import { ResumeData } from "./types";
-import { generateDocxCodeWithClaude } from "./claude-docx-generator";
 
 // =============================================================================
-// DOCX RESUME GENERATOR
-// Uses Claude Opus to generate actual docx library code
-// Then executes that code to create the Word document
+// DOCX RESUME GENERATOR - Hardcoded template matching reference exactly
 // =============================================================================
 
-/**
- * Execute Claude's generated docx code safely
- */
-function executeDocxCode(code: string): Document {
-    // Create a function that has access to all docx imports
-    const createDocument = new Function(
-        "Document",
-        "Packer",
-        "Paragraph",
-        "TextRun",
-        "Table",
-        "TableRow",
-        "TableCell",
-        "AlignmentType",
-        "LevelFormat",
-        "BorderStyle",
-        "WidthType",
-        "HeadingLevel",
-        "ExternalHyperlink",
-        "convertInchesToTwip",
-        `
-        ${code}
-        return doc;
-        `
-    );
+// Colors matching the reference template exactly
+const LINK_COLOR = "2563EB";
+const SECTION_LINE_COLOR = "808080";
+const TEXT_COLOR = "000000";
 
-    // Execute with the docx library components
-    return createDocument(
-        Document,
-        Packer,
-        Paragraph,
-        TextRun,
-        Table,
-        TableRow,
-        TableCell,
-        AlignmentType,
-        LevelFormat,
-        BorderStyle,
-        WidthType,
-        HeadingLevel,
-        ExternalHyperlink,
-        convertInchesToTwip
-    );
-}
+// Font configuration - Calibri matches the reference template
+const FONT = "Calibri";
+const FONT_SIZE_NAME = 28;
+const FONT_SIZE_SECTION = 20;
+const FONT_SIZE_NORMAL = 18;
+const FONT_SIZE_SMALL = 16;
 
-/**
- * Generate a professional resume DOCX using Claude's DOCX skills
- *
- * Flow:
- * 1. Claude Opus generates actual JavaScript code using the docx library
- * 2. We execute that code to create the Document
- * 3. Pack it into a DOCX blob
- *
- * @param data - Resume data extracted by GPT-5-mini
- * @returns Blob of the generated DOCX file
- */
+// Border helpers
+const noBorder = { style: BorderStyle.NONE, size: 0, color: "FFFFFF" };
+const noBorders = { top: noBorder, bottom: noBorder, left: noBorder, right: noBorder };
+
 export async function generateDOCX(data: ResumeData): Promise<Blob> {
-    // Step 1: Have Claude Opus generate the docx code
-    console.log("[DOCX] Asking Claude to generate docx code...");
-    const docxCode = await generateDocxCodeWithClaude(data);
-    console.log("[DOCX] Claude generated code, executing...");
+    const children: (Paragraph | Table)[] = [];
 
-    // Step 2: Execute the code to create the Document
-    const doc = executeDocxCode(docxCode);
-    console.log("[DOCX] Document created, packing...");
+    // === HEADER ===
+    const nameParts = (data.fullName || "").split(" ");
+    const lastName = nameParts[nameParts.length - 1] || "Name";
+    const githubUsername = data.github
+        ? data.github.replace(/^https?:\/\//, "").replace("github.com/", "").split("/")[0]
+        : "";
 
-    // Step 3: Pack into a blob
+    const headerTable = new Table({
+        width: { size: 100, type: WidthType.PERCENTAGE },
+        borders: {
+            top: noBorder, bottom: noBorder, left: noBorder, right: noBorder,
+            insideHorizontal: noBorder, insideVertical: noBorder,
+        },
+        rows: [
+            new TableRow({
+                children: [
+                    new TableCell({
+                        width: { size: 60, type: WidthType.PERCENTAGE },
+                        borders: noBorders,
+                        children: [
+                            new Paragraph({
+                                spacing: { after: 40 },
+                                children: [
+                                    new TextRun({
+                                        text: (data.fullName || "FULL NAME").toUpperCase(),
+                                        bold: true,
+                                        size: FONT_SIZE_NAME,
+                                        font: FONT,
+                                        color: TEXT_COLOR,
+                                    }),
+                                ],
+                            }),
+                            ...(data.linkedin ? [
+                                new Paragraph({
+                                    spacing: { after: 20 },
+                                    children: [
+                                        new ExternalHyperlink({
+                                            link: data.linkedin.startsWith("http") ? data.linkedin : `https://${data.linkedin}`,
+                                            children: [
+                                                new TextRun({
+                                                    text: `${lastName} | LinkedIn`,
+                                                    color: LINK_COLOR,
+                                                    underline: {},
+                                                    size: FONT_SIZE_NORMAL,
+                                                    font: FONT,
+                                                }),
+                                            ],
+                                        }),
+                                    ],
+                                }),
+                            ] : []),
+                            ...(data.github ? [
+                                new Paragraph({
+                                    children: [
+                                        new ExternalHyperlink({
+                                            link: data.github.startsWith("http") ? data.github : `https://${data.github}`,
+                                            children: [
+                                                new TextRun({
+                                                    text: `${githubUsername} (github.com)`,
+                                                    color: LINK_COLOR,
+                                                    underline: {},
+                                                    size: FONT_SIZE_NORMAL,
+                                                    font: FONT,
+                                                }),
+                                            ],
+                                        }),
+                                    ],
+                                }),
+                            ] : []),
+                        ],
+                    }),
+                    new TableCell({
+                        width: { size: 40, type: WidthType.PERCENTAGE },
+                        borders: noBorders,
+                        children: [
+                            ...(data.email ? [
+                                new Paragraph({
+                                    alignment: AlignmentType.RIGHT,
+                                    spacing: { after: 40 },
+                                    children: [
+                                        new TextRun({ text: "Email: ", size: FONT_SIZE_NORMAL, font: FONT, color: TEXT_COLOR }),
+                                        new ExternalHyperlink({
+                                            link: `mailto:${data.email}`,
+                                            children: [
+                                                new TextRun({
+                                                    text: data.email,
+                                                    color: LINK_COLOR,
+                                                    underline: {},
+                                                    size: FONT_SIZE_NORMAL,
+                                                    font: FONT,
+                                                }),
+                                            ],
+                                        }),
+                                    ],
+                                }),
+                            ] : []),
+                            ...(data.phone ? [
+                                new Paragraph({
+                                    alignment: AlignmentType.RIGHT,
+                                    children: [
+                                        new TextRun({ text: `Mobile: ${data.phone}`, size: FONT_SIZE_NORMAL, font: FONT, color: TEXT_COLOR }),
+                                    ],
+                                }),
+                            ] : []),
+                        ],
+                    }),
+                ],
+            }),
+        ],
+    });
+    children.push(headerTable);
+
+    // Section header helper
+    const addSectionHeader = (title: string) => {
+        children.push(
+            new Paragraph({
+                children: [new TextRun({ text: title, bold: true, size: FONT_SIZE_SECTION, font: FONT, color: TEXT_COLOR })],
+                alignment: AlignmentType.CENTER,
+                border: { bottom: { color: SECTION_LINE_COLOR, space: 1, size: 6, style: BorderStyle.SINGLE } },
+                spacing: { before: 180, after: 80 },
+            })
+        );
+    };
+
+    // === EDUCATION ===
+    if (data.education && data.education.length > 0) {
+        addSectionHeader("EDUCATION");
+        for (const edu of data.education) {
+            children.push(
+                new Table({
+                    width: { size: 100, type: WidthType.PERCENTAGE },
+                    borders: { top: noBorder, bottom: noBorder, left: noBorder, right: noBorder, insideHorizontal: noBorder, insideVertical: noBorder },
+                    rows: [
+                        new TableRow({
+                            children: [
+                                new TableCell({
+                                    width: { size: 65, type: WidthType.PERCENTAGE },
+                                    borders: noBorders,
+                                    children: [new Paragraph({ children: [new TextRun({ text: edu.institution, bold: true, size: FONT_SIZE_SECTION, font: FONT, color: TEXT_COLOR })] })],
+                                }),
+                                new TableCell({
+                                    width: { size: 35, type: WidthType.PERCENTAGE },
+                                    borders: noBorders,
+                                    children: [new Paragraph({ alignment: AlignmentType.RIGHT, children: [new TextRun({ text: edu.location || "", bold: true, size: FONT_SIZE_NORMAL, font: FONT, color: TEXT_COLOR })] })],
+                                }),
+                            ],
+                        }),
+                        new TableRow({
+                            children: [
+                                new TableCell({
+                                    width: { size: 65, type: WidthType.PERCENTAGE },
+                                    borders: noBorders,
+                                    children: [new Paragraph({ children: [new TextRun({ text: edu.gpa ? `${edu.degree}; GPA: ${edu.gpa}` : edu.degree, italics: true, size: FONT_SIZE_NORMAL, font: FONT, color: TEXT_COLOR })] })],
+                                }),
+                                new TableCell({
+                                    width: { size: 35, type: WidthType.PERCENTAGE },
+                                    borders: noBorders,
+                                    children: [new Paragraph({ alignment: AlignmentType.RIGHT, children: [new TextRun({ text: `${edu.startDate || ""} - ${edu.endDate || ""}`, bold: true, size: FONT_SIZE_NORMAL, font: FONT, color: TEXT_COLOR })] })],
+                                }),
+                            ],
+                        }),
+                    ],
+                }),
+                new Paragraph({ spacing: { after: 40 } })
+            );
+        }
+    }
+
+    // === SKILLS SUMMARY ===
+    if (data.skills) {
+        const skillItems: { label: string; items: string[] }[] = [];
+        if (data.skills.languages?.length) skillItems.push({ label: "Languages", items: data.skills.languages });
+        if (data.skills.frameworks?.length) skillItems.push({ label: "Frameworks", items: data.skills.frameworks });
+        if (data.skills.tools?.length) skillItems.push({ label: "Tools", items: data.skills.tools });
+        if (data.skills.platforms?.length) skillItems.push({ label: "Platforms", items: data.skills.platforms });
+        if (data.skills.soft?.length) skillItems.push({ label: "Soft Skills", items: data.skills.soft });
+
+        if (skillItems.length > 0) {
+            addSectionHeader("SKILLS SUMMARY");
+            for (const { label, items } of skillItems) {
+                children.push(
+                    new Paragraph({
+                        children: [
+                            new TextRun({ text: "●  ", size: FONT_SIZE_SMALL, font: FONT, color: TEXT_COLOR }),
+                            new TextRun({ text: `${label}: `, bold: true, size: FONT_SIZE_NORMAL, font: FONT, color: TEXT_COLOR }),
+                            new TextRun({ text: items.join(", "), size: FONT_SIZE_NORMAL, font: FONT, color: TEXT_COLOR }),
+                        ],
+                        indent: { left: convertInchesToTwip(0.15) },
+                        spacing: { after: 40 },
+                    })
+                );
+            }
+        }
+    }
+
+    // === WORK EXPERIENCE ===
+    if (data.experience && data.experience.length > 0) {
+        addSectionHeader("WORK EXPERIENCE");
+        for (const exp of data.experience) {
+            const expHeaderChildren = [
+                new TextRun({ text: `${exp.position.toUpperCase()} | ${exp.company.toUpperCase()} | `, bold: true, size: FONT_SIZE_SECTION, font: FONT, color: TEXT_COLOR }),
+            ];
+            if (exp.link) {
+                expHeaderChildren.push(
+                    new ExternalHyperlink({
+                        link: exp.link.startsWith("http") ? exp.link : `https://${exp.link}`,
+                        children: [new TextRun({ text: "LINK", bold: true, color: LINK_COLOR, size: FONT_SIZE_SECTION, font: FONT })],
+                    }) as unknown as TextRun
+                );
+            } else {
+                expHeaderChildren.push(new TextRun({ text: "LINK", bold: true, color: LINK_COLOR, size: FONT_SIZE_SECTION, font: FONT }));
+            }
+
+            children.push(
+                new Table({
+                    width: { size: 100, type: WidthType.PERCENTAGE },
+                    borders: { top: noBorder, bottom: noBorder, left: noBorder, right: noBorder, insideHorizontal: noBorder, insideVertical: noBorder },
+                    rows: [
+                        new TableRow({
+                            children: [
+                                new TableCell({
+                                    width: { size: 70, type: WidthType.PERCENTAGE },
+                                    borders: noBorders,
+                                    children: [new Paragraph({ children: expHeaderChildren })],
+                                }),
+                                new TableCell({
+                                    width: { size: 30, type: WidthType.PERCENTAGE },
+                                    borders: noBorders,
+                                    children: [new Paragraph({ alignment: AlignmentType.RIGHT, children: [new TextRun({ text: `${exp.startDate || ""} - ${exp.endDate || ""}`, bold: true, size: FONT_SIZE_NORMAL, font: FONT, color: TEXT_COLOR })] })],
+                                }),
+                            ],
+                        }),
+                    ],
+                })
+            );
+
+            for (const highlight of exp.highlights || []) {
+                children.push(
+                    new Paragraph({
+                        children: [new TextRun({ text: `○  ${highlight}`, size: FONT_SIZE_NORMAL, font: FONT, color: TEXT_COLOR })],
+                        indent: { left: convertInchesToTwip(0.2) },
+                        spacing: { after: 30 },
+                    })
+                );
+            }
+            children.push(new Paragraph({ spacing: { after: 60 } }));
+        }
+    }
+
+    // === PROJECTS ===
+    if (data.projects && data.projects.length > 0) {
+        addSectionHeader("PROJECTS");
+        for (const proj of data.projects) {
+            const projHeaderChildren = [
+                new TextRun({ text: `${proj.name} | `, bold: true, size: FONT_SIZE_SECTION, font: FONT, color: TEXT_COLOR }),
+            ];
+            if (proj.link) {
+                projHeaderChildren.push(
+                    new ExternalHyperlink({
+                        link: proj.link.startsWith("http") ? proj.link : `https://${proj.link}`,
+                        children: [new TextRun({ text: "LINK", bold: true, color: LINK_COLOR, size: FONT_SIZE_SECTION, font: FONT })],
+                    }) as unknown as TextRun
+                );
+            } else {
+                projHeaderChildren.push(new TextRun({ text: "LINK", bold: true, color: LINK_COLOR, size: FONT_SIZE_SECTION, font: FONT }));
+            }
+
+            children.push(
+                new Table({
+                    width: { size: 100, type: WidthType.PERCENTAGE },
+                    borders: { top: noBorder, bottom: noBorder, left: noBorder, right: noBorder, insideHorizontal: noBorder, insideVertical: noBorder },
+                    rows: [
+                        new TableRow({
+                            children: [
+                                new TableCell({
+                                    width: { size: 70, type: WidthType.PERCENTAGE },
+                                    borders: noBorders,
+                                    children: [new Paragraph({ children: projHeaderChildren })],
+                                }),
+                                new TableCell({
+                                    width: { size: 30, type: WidthType.PERCENTAGE },
+                                    borders: noBorders,
+                                    children: [new Paragraph({ alignment: AlignmentType.RIGHT, children: [new TextRun({ text: proj.startDate || proj.endDate ? `${proj.startDate || ""} - ${proj.endDate || ""}` : "", bold: true, size: FONT_SIZE_NORMAL, font: FONT, color: TEXT_COLOR })] })],
+                                }),
+                            ],
+                        }),
+                    ],
+                })
+            );
+
+            for (const highlight of proj.highlights || []) {
+                children.push(
+                    new Paragraph({
+                        children: [new TextRun({ text: `○  ${highlight}`, size: FONT_SIZE_NORMAL, font: FONT, color: TEXT_COLOR })],
+                        indent: { left: convertInchesToTwip(0.2) },
+                        spacing: { after: 30 },
+                    })
+                );
+            }
+            children.push(new Paragraph({ spacing: { after: 60 } }));
+        }
+    }
+
+    // === CERTIFICATES ===
+    if (data.certifications && data.certifications.length > 0) {
+        addSectionHeader("CERTIFICATES");
+        for (const cert of data.certifications) {
+            const namePart = cert.issuer ? `${cert.name} (${cert.issuer})` : cert.name;
+            const certHeaderChildren = [
+                new TextRun({ text: `${namePart} | `, bold: true, size: FONT_SIZE_SECTION, font: FONT, color: TEXT_COLOR }),
+            ];
+            if (cert.link) {
+                certHeaderChildren.push(
+                    new ExternalHyperlink({
+                        link: cert.link.startsWith("http") ? cert.link : `https://${cert.link}`,
+                        children: [new TextRun({ text: "CERTIFICATE", bold: true, color: LINK_COLOR, size: FONT_SIZE_SECTION, font: FONT })],
+                    }) as unknown as TextRun
+                );
+            } else {
+                certHeaderChildren.push(new TextRun({ text: "CERTIFICATE", bold: true, color: LINK_COLOR, size: FONT_SIZE_SECTION, font: FONT }));
+            }
+
+            children.push(
+                new Table({
+                    width: { size: 100, type: WidthType.PERCENTAGE },
+                    borders: { top: noBorder, bottom: noBorder, left: noBorder, right: noBorder, insideHorizontal: noBorder, insideVertical: noBorder },
+                    rows: [
+                        new TableRow({
+                            children: [
+                                new TableCell({
+                                    width: { size: 70, type: WidthType.PERCENTAGE },
+                                    borders: noBorders,
+                                    children: [new Paragraph({ children: certHeaderChildren })],
+                                }),
+                                new TableCell({
+                                    width: { size: 30, type: WidthType.PERCENTAGE },
+                                    borders: noBorders,
+                                    children: [new Paragraph({ alignment: AlignmentType.RIGHT, children: [new TextRun({ text: cert.date || "", bold: true, size: FONT_SIZE_NORMAL, font: FONT, color: TEXT_COLOR })] })],
+                                }),
+                            ],
+                        }),
+                    ],
+                })
+            );
+
+            const certWithHighlights = cert as { highlights?: string[] };
+            if (certWithHighlights.highlights && certWithHighlights.highlights.length > 0) {
+                for (const highlight of certWithHighlights.highlights) {
+                    children.push(
+                        new Paragraph({
+                            children: [new TextRun({ text: `○  ${highlight}`, size: FONT_SIZE_NORMAL, font: FONT, color: TEXT_COLOR })],
+                            indent: { left: convertInchesToTwip(0.2) },
+                            spacing: { after: 30 },
+                        })
+                    );
+                }
+            }
+            children.push(new Paragraph({ spacing: { after: 40 } }));
+        }
+    }
+
+    // Create document
+    const doc = new Document({
+        sections: [{
+            properties: {
+                page: {
+                    margin: {
+                        top: convertInchesToTwip(0.5),
+                        right: convertInchesToTwip(0.5),
+                        bottom: convertInchesToTwip(0.5),
+                        left: convertInchesToTwip(0.5),
+                    },
+                },
+            },
+            children,
+        }],
+    });
+
     return await Packer.toBlob(doc);
 }
