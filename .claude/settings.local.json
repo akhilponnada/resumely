@@ -27,7 +27,8 @@
       "WebFetch(domain:chat-sdk.dev)",
       "Bash(curl -s \"https://raw.githubusercontent.com/vercel/ai-chatbot/main/app/\\(chat\\)/api/chat/route.ts\")",
       "Bash(git add -A)",
-      "Bash(git commit -m \"$\\(cat <<''EOF''\nClean up chat API and fix streaming\n\n- Simplified chat API with proper text streaming\n- Keep Azure Anthropic Foundry SDK for compatibility\n- Clean validation and rate limiting\n- Fixed chat pages with auto-focus and no page refresh\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")"
+      "Bash(git commit -m \"$\\(cat <<''EOF''\nClean up chat API and fix streaming\n\n- Simplified chat API with proper text streaming\n- Keep Azure Anthropic Foundry SDK for compatibility\n- Clean validation and rate limiting\n- Fixed chat pages with auto-focus and no page refresh\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(git commit -m \"$\\(cat <<''EOF''\nSwitch to GPT-5-mini for chat and fact extraction\n\n- Chat API now uses Azure OpenAI GPT-5-mini \\(faster, cheaper\\)\n- Resume generation uses GPT-5-mini with JSON mode for reliable parsing\n- Claude Opus reserved for complex document generation if needed\n- Added response_format: json_object for guaranteed JSON output\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")"
     ]
   }
 }

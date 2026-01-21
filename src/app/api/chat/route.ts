@@ -1,13 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
-import AnthropicFoundry from "@anthropic-ai/foundry-sdk";
+import { AzureOpenAI } from "openai";
 
 export const maxDuration = 60;
 
-// Rate limiting (use Redis in production)
+// Rate limiting
 const rateLimitMap = new Map<string, { count: number; resetTime: number }>();
 const RATE_LIMIT_WINDOW = 60000;
-const MAX_REQUESTS = 20;
+const MAX_REQUESTS = 30; // Higher limit since GPT-5-mini is faster
 
 function checkRateLimit(userId: string): boolean {
     const now = Date.now();
@@ -26,14 +26,11 @@ function checkRateLimit(userId: string): boolean {
     return true;
 }
 
-// Azure Anthropic client setup
-const endpoint = process.env.AZURE_CLAUDE_ENDPOINT || "";
-const resourceMatch = endpoint.match(/https:\/\/([^.]+)\.services\.ai\.azure\.com/);
-const resourceName = resourceMatch ? resourceMatch[1] : "";
-
-const client = new AnthropicFoundry({
-    apiKey: process.env.AZURE_CLAUDE_API_KEY!,
-    resource: resourceName,
+// Azure OpenAI client for GPT-5-mini
+const client = new AzureOpenAI({
+    apiKey: process.env.AZURE_CLAUDE_API_KEY!, // Same key works for both
+    endpoint: "https://ai-akhilponnada2047ai102855017871.cognitiveservices.azure.com",
+    apiVersion: "2024-12-01-preview",
 });
 
 const SYSTEM_PROMPT = `You are a helpful career and resume assistant called "Resumely". Help users with:
@@ -50,10 +47,10 @@ IMPORTANT: If a user pastes a job description or job posting:
 4. Offer to help them craft bullet points that align with the job requirements
 5. Ask follow-up questions about their experience related to the role
 
-Be friendly, professional, and concise.`;
+Be friendly, professional, and concise. Use markdown formatting for better readability.`;
 
 // Input validation
-const MAX_MESSAGE_LENGTH = 10000;
+const MAX_MESSAGE_LENGTH = 15000;
 const MAX_MESSAGES = 50;
 
 interface ChatMessage {
@@ -67,7 +64,7 @@ function validateMessages(messages: unknown): messages is ChatMessage[] {
     return messages.every((msg) => {
         if (typeof msg !== "object" || msg === null) return false;
         const m = msg as Record<string, unknown>;
-        if (typeof m.role !== "string" || !["user", "assistant"].includes(m.role)) return false;
+        if (typeof m.role !== "string" || !["user", "assistant", "system"].includes(m.role)) return false;
         if (typeof m.content !== "string" || m.content.length === 0 || m.content.length > MAX_MESSAGE_LENGTH) return false;
         return true;
     });
@@ -93,18 +90,21 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: "Invalid messages" }, { status: 400 });
         }
 
-        // Format for Anthropic
-        const formattedMessages = messages.map((msg: ChatMessage) => ({
-            role: msg.role as "user" | "assistant",
-            content: msg.content.trim(),
-        }));
+        // Format messages for OpenAI
+        const formattedMessages = [
+            { role: "system" as const, content: SYSTEM_PROMPT },
+            ...messages.map((msg: ChatMessage) => ({
+                role: msg.role as "user" | "assistant",
+                content: msg.content.trim(),
+            }))
+        ];
 
-        // Stream response from Azure Anthropic
-        const stream = await client.messages.stream({
-            model: "claude-sonnet-4-20250514",
-            max_tokens: 2048,
-            system: SYSTEM_PROMPT,
+        // Stream response from Azure OpenAI GPT-5-mini
+        const stream = await client.chat.completions.create({
+            model: "gpt-5-mini",
             messages: formattedMessages,
+            max_completion_tokens: 4096,
+            stream: true,
         });
 
         // Create readable stream for response
@@ -112,9 +112,10 @@ export async function POST(req: NextRequest) {
         const readableStream = new ReadableStream({
             async start(controller) {
                 try {
-                    for await (const event of stream) {
-                        if (event.type === "content_block_delta" && event.delta.type === "text_delta") {
-                            controller.enqueue(encoder.encode(event.delta.text));
+                    for await (const chunk of stream) {
+                        const content = chunk.choices[0]?.delta?.content;
+                        if (content) {
+                            controller.enqueue(encoder.encode(content));
                         }
                     }
                 } catch (error) {
