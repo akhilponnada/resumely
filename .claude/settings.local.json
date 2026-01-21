@@ -1,0 +1,29 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "WebSearch",
+      "Bash(curl -s \"https://api.github.com/repos/anthropics/skills/contents\")",
+      "Bash(curl -s \"https://raw.githubusercontent.com/anthropics/skills/main/README.md\")",
+      "Bash(curl -s \"https://api.github.com/repos/anthropics/skills/contents/skills\")",
+      "Bash(curl -s \"https://api.github.com/repos/anthropics/skills/contents/skills/docx\")",
+      "Bash(curl -s \"https://raw.githubusercontent.com/anthropics/skills/main/skills/docx/SKILL.md\")",
+      "Bash(curl -s \"https://raw.githubusercontent.com/anthropics/skills/main/skills/docx/docx-js.md\")",
+      "Bash(npx tsc --noEmit)",
+      "Bash(npm run build)",
+      "Bash(git add src/app/api/generate-resume/route.ts src/lib/docx-generator.ts src/lib/types.ts)",
+      "Bash(git commit -m \"$\\(cat <<''EOF''\nUpdate resume builder with Claude Skills pattern and improved DOCX template\n\n- Refactor system prompt to follow Anthropic''s Claude Skills pattern\n- Add STAR method guidance and strong action verbs for resume enhancement\n- Update DOCX generator to match professional resume template exactly\n- Add support for certificate highlights in types\n- Improve header layout with proper LinkedIn/GitHub formatting\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(git push origin main)",
+      "Bash(npx vercel --prod)",
+      "Bash(npx vercel inspect https://vercel.com/akhilponnadas-projects/resumely/HkPU4LJ1VtgBCCfMhqxR9kAPJqRQ)",
+      "Bash(npx vercel ls)",
+      "Bash(npx vercel env ls)",
+      "Bash(npx convex deploy)",
+      "Bash(git add convex/schema.ts)",
+      "Bash(git commit -m \"$\\(cat <<''EOF''\nAdd missing fields to Convex schema\n\n- Add link field to experience\n- Add platforms field to skills\n- Add highlights field to certifications\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(npx convex deploy --yes)",
+      "Bash(git add convex/resumes.ts)",
+      "Bash(git commit -m \"$\\(cat <<''EOF''\nFix duplicate validator in resumes.ts - add missing fields\n\n- Add link to experience\n- Add platforms to skills  \n- Add highlights to certifications\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")"
+    ]
+  }
+}

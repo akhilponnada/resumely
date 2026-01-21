@@ -1,14 +1,14 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { DashboardLayout } from "@/components/DashboardLayout";
-import { Sparkles, ArrowUp, Copy, ThumbsUp, ThumbsDown, Paperclip } from "lucide-react";
+import { Sparkles, ArrowUp, Copy, ThumbsUp, ThumbsDown, Paperclip, Check } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { useUser } from "@clerk/nextjs";
 import { useMutation } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
-import { useRouter } from "next/navigation";
+import { Id } from "../../../../convex/_generated/dataModel";
 
 const SUGGESTED_PROMPTS = [
     "Paste a job description to tailor my resume",
@@ -18,23 +18,30 @@ const SUGGESTED_PROMPTS = [
 ];
 
 interface Message {
+    id: string;
     role: "user" | "assistant";
     content: string;
 }
 
 export default function ChatPage() {
     const { user } = useUser();
-    const router = useRouter();
     const [input, setInput] = useState("");
     const [isLoading, setIsLoading] = useState(false);
     const [messages, setMessages] = useState<Message[]>([]);
     const [streamingContent, setStreamingContent] = useState("");
+    const [chatId, setChatId] = useState<Id<"chats"> | null>(null);
+    const [copiedId, setCopiedId] = useState<string | null>(null);
     const inputRef = useRef<HTMLTextAreaElement>(null);
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
     // Mutations
     const createChat = useMutation(api.chats.createChat);
     const addMessage = useMutation(api.messages.addMessage);
+
+    // Auto-focus input on mount and after sending
+    useEffect(() => {
+        inputRef.current?.focus();
+    }, []);
 
     // Auto-resize textarea
     useEffect(() => {
@@ -49,38 +56,67 @@ export default function ChatPage() {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     }, [messages, streamingContent]);
 
-    const copyToClipboard = (text: string) => {
-        navigator.clipboard.writeText(text);
-    };
+    // Focus input after loading completes
+    useEffect(() => {
+        if (!isLoading) {
+            inputRef.current?.focus();
+        }
+    }, [isLoading]);
 
-    const handleSubmit = async (message?: string) => {
-        const content = (message || input).trim();
+    const copyToClipboard = useCallback((text: string, id: string) => {
+        navigator.clipboard.writeText(text);
+        setCopiedId(id);
+        setTimeout(() => setCopiedId(null), 2000);
+    }, []);
+
+    const handleSubmit = useCallback(async (messageContent?: string) => {
+        const content = (messageContent || input).trim();
         if (!content || isLoading || !user?.id) return;
 
-        const userMessage: Message = { role: "user", content };
+        const userMessage: Message = {
+            id: `user-${Date.now()}`,
+            role: "user",
+            content
+        };
+
         setMessages(prev => [...prev, userMessage]);
         setInput("");
         setIsLoading(true);
         setStreamingContent("");
 
+        // Reset textarea height
+        if (inputRef.current) {
+            inputRef.current.style.height = "auto";
+        }
+
         try {
-            // Create new chat
-            const title = content.split(" ").slice(0, 5).join(" ") + (content.split(" ").length > 5 ? "..." : "");
-            const chatId = await createChat({
-                userId: user.id,
-                title: title
-            });
+            let currentChatId = chatId;
 
-            // Add user message
-            await addMessage({ chatId, role: "user", content });
+            // Create new chat if this is the first message
+            if (!currentChatId) {
+                const title = content.split(" ").slice(0, 5).join(" ") + (content.split(" ").length > 5 ? "..." : "");
+                currentChatId = await createChat({
+                    userId: user.id,
+                    title: title
+                });
+                setChatId(currentChatId);
+            }
 
-            // Call AI API
+            // Add user message to DB
+            await addMessage({ chatId: currentChatId, role: "user", content });
+
+            // Prepare message history for AI
+            const messageHistory = messages.map(m => ({
+                role: m.role,
+                content: m.content
+            }));
+            messageHistory.push({ role: "user", content });
+
+            // Call AI API with streaming
             const response = await fetch("/api/chat", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    messages: [{ role: "user", content }]
-                }),
+                body: JSON.stringify({ messages: messageHistory }),
             });
 
             if (!response.ok) {
@@ -89,7 +125,7 @@ export default function ChatPage() {
             }
 
             const reader = response.body?.getReader();
-            if (!reader) throw new Error("No reader");
+            if (!reader) throw new Error("No reader available");
 
             const decoder = new TextDecoder();
             let fullContent = "";
@@ -102,30 +138,38 @@ export default function ChatPage() {
                 setStreamingContent(fullContent);
             }
 
-            // Add assistant message
-            setMessages(prev => [...prev, { role: "assistant", content: fullContent }]);
+            // Add assistant message to state
+            const assistantMessage: Message = {
+                id: `assistant-${Date.now()}`,
+                role: "assistant",
+                content: fullContent
+            };
+            setMessages(prev => [...prev, assistantMessage]);
             setStreamingContent("");
 
             // Add assistant message to DB
-            await addMessage({ chatId, role: "assistant", content: fullContent });
-
-            // Navigate to the chat
-            router.push(`/dashboard/chat/${chatId}`);
+            await addMessage({ chatId: currentChatId, role: "assistant", content: fullContent });
 
         } catch (error) {
             console.error("Chat error:", error);
-            alert(error instanceof Error ? error.message : "Failed to send message");
+            // Add error message to chat
+            setMessages(prev => [...prev, {
+                id: `error-${Date.now()}`,
+                role: "assistant",
+                content: `Sorry, there was an error: ${error instanceof Error ? error.message : "Failed to send message"}. Please try again.`
+            }]);
         } finally {
             setIsLoading(false);
+            // Focus will be restored by the useEffect
         }
-    };
+    }, [input, isLoading, user?.id, chatId, messages, createChat, addMessage]);
 
-    const handleKeyDown = (e: React.KeyboardEvent) => {
+    const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
         if (e.key === "Enter" && !e.shiftKey) {
             e.preventDefault();
             handleSubmit();
         }
-    };
+    }, [handleSubmit]);
 
     const hasMessages = messages.length > 0 || streamingContent;
 
@@ -176,7 +220,7 @@ export default function ChatPage() {
                                     color: "var(--accents-4)",
                                     marginBottom: "40px"
                                 }}>
-                                    💡 Tip: Paste a job description to get a tailored resume!
+                                    Tip: Paste a job description to get a tailored resume!
                                 </p>
 
                                 {/* Suggested Prompts */}
@@ -191,6 +235,7 @@ export default function ChatPage() {
                                         <button
                                             key={i}
                                             onClick={() => handleSubmit(prompt)}
+                                            disabled={isLoading}
                                             style={{
                                                 padding: "10px 16px",
                                                 background: "#ffffff",
@@ -198,12 +243,15 @@ export default function ChatPage() {
                                                 borderRadius: "20px",
                                                 fontSize: "13px",
                                                 color: "var(--geist-foreground)",
-                                                cursor: "pointer",
-                                                transition: "all 0.15s ease"
+                                                cursor: isLoading ? "not-allowed" : "pointer",
+                                                transition: "all 0.15s ease",
+                                                opacity: isLoading ? 0.5 : 1
                                             }}
                                             onMouseEnter={(e) => {
-                                                e.currentTarget.style.background = "#f9fafb";
-                                                e.currentTarget.style.borderColor = "var(--accents-3)";
+                                                if (!isLoading) {
+                                                    e.currentTarget.style.background = "#f9fafb";
+                                                    e.currentTarget.style.borderColor = "var(--accents-3)";
+                                                }
                                             }}
                                             onMouseLeave={(e) => {
                                                 e.currentTarget.style.background = "#ffffff";
@@ -218,10 +266,9 @@ export default function ChatPage() {
                         )}
 
                         {/* Messages */}
-                        {messages.map((msg, i) => (
-                            <div key={i} style={{ marginBottom: "24px" }}>
+                        {messages.map((msg) => (
+                            <div key={msg.id} style={{ marginBottom: "24px" }}>
                                 {msg.role === "user" ? (
-                                    // User message - right aligned bubble
                                     <div style={{
                                         display: "flex",
                                         justifyContent: "flex-end",
@@ -234,13 +281,13 @@ export default function ChatPage() {
                                             borderRadius: "20px",
                                             maxWidth: "70%",
                                             fontSize: "15px",
-                                            lineHeight: 1.5
+                                            lineHeight: 1.5,
+                                            whiteSpace: "pre-wrap"
                                         }}>
                                             {msg.content}
                                         </div>
                                     </div>
                                 ) : (
-                                    // Assistant message - left aligned with icon
                                     <div>
                                         <div style={{
                                             display: "flex",
@@ -268,21 +315,20 @@ export default function ChatPage() {
                                                         {msg.content}
                                                     </ReactMarkdown>
                                                 </div>
-                                                {/* Action buttons */}
                                                 <div style={{
                                                     display: "flex",
                                                     gap: "4px",
                                                     marginTop: "12px"
                                                 }}>
                                                     <button
-                                                        onClick={() => copyToClipboard(msg.content)}
+                                                        onClick={() => copyToClipboard(msg.content, msg.id)}
                                                         style={{
                                                             padding: "6px",
                                                             background: "transparent",
                                                             border: "none",
                                                             borderRadius: "6px",
                                                             cursor: "pointer",
-                                                            color: "var(--accents-4)",
+                                                            color: copiedId === msg.id ? "#22c55e" : "var(--accents-4)",
                                                             display: "flex",
                                                             alignItems: "center",
                                                             justifyContent: "center"
@@ -290,7 +336,7 @@ export default function ChatPage() {
                                                         onMouseEnter={(e) => e.currentTarget.style.background = "var(--accents-1)"}
                                                         onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
                                                     >
-                                                        <Copy size={16} />
+                                                        {copiedId === msg.id ? <Check size={16} /> : <Copy size={16} />}
                                                     </button>
                                                     <button
                                                         style={{
@@ -384,9 +430,9 @@ export default function ChatPage() {
                     </div>
                 </div>
 
-                {/* Input Area - Pinned to bottom */}
+                {/* Input Area */}
                 <div style={{
-                    padding: "12px 24px 0",
+                    padding: "12px 24px 24px",
                     background: "#ffffff"
                 }}>
                     <div style={{
@@ -398,7 +444,6 @@ export default function ChatPage() {
                             borderRadius: "12px",
                             overflow: "hidden"
                         }}>
-                            {/* Input Row */}
                             <div style={{
                                 display: "flex",
                                 alignItems: "flex-end",
@@ -429,7 +474,6 @@ export default function ChatPage() {
                                 />
                             </div>
 
-                            {/* Bottom Row - Model & Send */}
                             <div style={{
                                 display: "flex",
                                 alignItems: "center",

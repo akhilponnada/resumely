@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useRef, useEffect, use } from "react";
+import { useState, useRef, useEffect, useCallback, use } from "react";
 import { DashboardLayout } from "@/components/DashboardLayout";
-import { ArrowUp, Sparkles, Copy, ThumbsUp, ThumbsDown, Paperclip } from "lucide-react";
+import { ArrowUp, Sparkles, Copy, ThumbsUp, ThumbsDown, Paperclip, Check } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { useUser } from "@clerk/nextjs";
@@ -22,12 +22,18 @@ export default function ChatDetailPage({ params }: ChatPageProps) {
     const [input, setInput] = useState("");
     const [isLoading, setIsLoading] = useState(false);
     const [streamingContent, setStreamingContent] = useState("");
+    const [copiedId, setCopiedId] = useState<string | null>(null);
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLTextAreaElement>(null);
 
     // Queries & Mutations
     const messages = useQuery(api.messages.getMessages, { chatId });
     const addMessage = useMutation(api.messages.addMessage);
+
+    // Auto-focus input on mount
+    useEffect(() => {
+        inputRef.current?.focus();
+    }, []);
 
     // Scroll to bottom
     useEffect(() => {
@@ -42,11 +48,20 @@ export default function ChatDetailPage({ params }: ChatPageProps) {
         }
     }, [input]);
 
-    const copyToClipboard = (text: string) => {
-        navigator.clipboard.writeText(text);
-    };
+    // Focus input after loading completes
+    useEffect(() => {
+        if (!isLoading) {
+            inputRef.current?.focus();
+        }
+    }, [isLoading]);
 
-    const handleSubmit = async (e?: React.FormEvent) => {
+    const copyToClipboard = useCallback((text: string, id: string) => {
+        navigator.clipboard.writeText(text);
+        setCopiedId(id);
+        setTimeout(() => setCopiedId(null), 2000);
+    }, []);
+
+    const handleSubmit = useCallback(async (e?: React.FormEvent) => {
         e?.preventDefault();
         if (!input.trim() || isLoading || !user?.id) return;
 
@@ -55,8 +70,13 @@ export default function ChatDetailPage({ params }: ChatPageProps) {
         setIsLoading(true);
         setStreamingContent("");
 
+        // Reset textarea height
+        if (inputRef.current) {
+            inputRef.current.style.height = "auto";
+        }
+
         try {
-            // Add user message
+            // Add user message to DB
             await addMessage({ chatId, role: "user", content });
 
             // Prepare message history for AI
@@ -64,7 +84,7 @@ export default function ChatDetailPage({ params }: ChatPageProps) {
                 ? [...messages.map(m => ({ role: m.role, content: m.content })), { role: "user", content }]
                 : [{ role: "user", content }];
 
-            // Call AI API
+            // Call AI API with streaming
             const response = await fetch("/api/chat", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -77,7 +97,7 @@ export default function ChatDetailPage({ params }: ChatPageProps) {
             }
 
             const reader = response.body?.getReader();
-            if (!reader) throw new Error("No reader");
+            if (!reader) throw new Error("No reader available");
 
             const decoder = new TextDecoder();
             let fullContent = "";
@@ -99,15 +119,16 @@ export default function ChatDetailPage({ params }: ChatPageProps) {
         } finally {
             setIsLoading(false);
             setStreamingContent("");
+            // Focus will be restored by the useEffect
         }
-    };
+    }, [input, isLoading, user?.id, chatId, messages, addMessage]);
 
-    const handleKeyDown = (e: React.KeyboardEvent) => {
+    const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
         if (e.key === "Enter" && !e.shiftKey) {
             e.preventDefault();
             handleSubmit();
         }
-    };
+    }, [handleSubmit]);
 
     return (
         <DashboardLayout>
@@ -132,7 +153,6 @@ export default function ChatDetailPage({ params }: ChatPageProps) {
                             messages.map((m) => (
                                 <div key={m._id} style={{ marginBottom: "24px" }}>
                                     {m.role === "user" ? (
-                                        // User message - right aligned bubble
                                         <div style={{
                                             display: "flex",
                                             justifyContent: "flex-end",
@@ -152,7 +172,6 @@ export default function ChatDetailPage({ params }: ChatPageProps) {
                                             </div>
                                         </div>
                                     ) : (
-                                        // Assistant message - left aligned with icon
                                         <div>
                                             <div style={{
                                                 display: "flex",
@@ -180,21 +199,20 @@ export default function ChatDetailPage({ params }: ChatPageProps) {
                                                             {m.content}
                                                         </ReactMarkdown>
                                                     </div>
-                                                    {/* Action buttons */}
                                                     <div style={{
                                                         display: "flex",
                                                         gap: "4px",
                                                         marginTop: "12px"
                                                     }}>
                                                         <button
-                                                            onClick={() => copyToClipboard(m.content)}
+                                                            onClick={() => copyToClipboard(m.content, m._id)}
                                                             style={{
                                                                 padding: "6px",
                                                                 background: "transparent",
                                                                 border: "none",
                                                                 borderRadius: "6px",
                                                                 cursor: "pointer",
-                                                                color: "var(--accents-4)",
+                                                                color: copiedId === m._id ? "#22c55e" : "var(--accents-4)",
                                                                 display: "flex",
                                                                 alignItems: "center",
                                                                 justifyContent: "center"
@@ -202,7 +220,7 @@ export default function ChatDetailPage({ params }: ChatPageProps) {
                                                             onMouseEnter={(e) => e.currentTarget.style.background = "var(--accents-1)"}
                                                             onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
                                                         >
-                                                            <Copy size={16} />
+                                                            {copiedId === m._id ? <Check size={16} /> : <Copy size={16} />}
                                                         </button>
                                                         <button
                                                             style={{
@@ -305,9 +323,9 @@ export default function ChatDetailPage({ params }: ChatPageProps) {
                     </div>
                 </div>
 
-                {/* Input Area - Pinned to bottom */}
+                {/* Input Area */}
                 <div style={{
-                    padding: "12px 24px 0",
+                    padding: "12px 24px 24px",
                     background: "#ffffff"
                 }}>
                     <div style={{
@@ -319,7 +337,6 @@ export default function ChatDetailPage({ params }: ChatPageProps) {
                             borderRadius: "12px",
                             overflow: "hidden"
                         }}>
-                            {/* Input Row */}
                             <div style={{
                                 display: "flex",
                                 alignItems: "flex-end",
@@ -350,7 +367,6 @@ export default function ChatDetailPage({ params }: ChatPageProps) {
                                 />
                             </div>
 
-                            {/* Bottom Row - Model & Send */}
                             <div style={{
                                 display: "flex",
                                 alignItems: "center",
