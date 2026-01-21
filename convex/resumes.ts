@@ -23,6 +23,7 @@ const resumeDataValidator = v.object({
         location: v.optional(v.string()),
         startDate: v.optional(v.string()),
         endDate: v.optional(v.string()),
+        link: v.optional(v.string()),
         highlights: v.array(v.string()),
     })),
     projects: v.array(v.object({
@@ -37,6 +38,7 @@ const resumeDataValidator = v.object({
         languages: v.optional(v.array(v.string())),
         frameworks: v.optional(v.array(v.string())),
         tools: v.optional(v.array(v.string())),
+        platforms: v.optional(v.array(v.string())),
         libraries: v.optional(v.array(v.string())),
         soft: v.optional(v.array(v.string())),
     }),
@@ -45,6 +47,7 @@ const resumeDataValidator = v.object({
         issuer: v.optional(v.string()),
         date: v.optional(v.string()),
         link: v.optional(v.string()),
+        highlights: v.optional(v.array(v.string())),
     }))),
 });
 
