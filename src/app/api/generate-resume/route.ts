@@ -78,6 +78,12 @@ const SYSTEM_PROMPT = `You are an expert resume parser. Extract and structure re
 - Platforms: Development environments or platforms
 - Soft: Professional skills (Communication, Customer Service, Leadership, etc.)
 
+## LINK EXTRACTION - CRITICAL
+- ONLY include a link if an actual URL is provided in the input
+- If no URL is provided, set the link field to empty string ""
+- DO NOT make up or guess URLs - only extract what's actually there
+- Look for URLs like: https://..., http://..., github.com/..., linkedin.com/..., etc.
+
 ## Output Format - RESPOND WITH ONLY VALID JSON:
 
 {
@@ -85,8 +91,8 @@ const SYSTEM_PROMPT = `You are an expert resume parser. Extract and structure re
     "fullName": "Full Name",
     "email": "email@example.com",
     "phone": "+44 XXXXXXXXXX",
-    "linkedin": "linkedin.com/in/username",
-    "github": "github.com/username",
+    "linkedin": "linkedin.com/in/username or empty if not provided",
+    "github": "github.com/username or empty if not provided",
     "website": "",
     "summary": "",
     "education": [
@@ -106,7 +112,7 @@ const SYSTEM_PROMPT = `You are an expert resume parser. Extract and structure re
         "location": "Edinburgh, UK",
         "startDate": "June 2025",
         "endDate": "Present",
-        "link": "",
+        "link": "ONLY if URL provided in input, otherwise empty string",
         "highlights": ["Spearheaded cross-functional coordination with drivers and Operations Control Room during incidents"]
       }
     ],
@@ -116,7 +122,7 @@ const SYSTEM_PROMPT = `You are an expert resume parser. Extract and structure re
         "technologies": "Tech1, Tech2, Tech3",
         "startDate": "Month Year",
         "endDate": "Month Year",
-        "link": "",
+        "link": "ONLY if URL provided in input, otherwise empty string",
         "highlights": ["Plain text achievement"]
       }
     ],
@@ -132,7 +138,7 @@ const SYSTEM_PROMPT = `You are an expert resume parser. Extract and structure re
         "name": "Python for Data Science",
         "issuer": "IBM",
         "date": "January 2024",
-        "link": "",
+        "link": "ONLY if URL provided in input, otherwise empty string",
         "highlights": []
       }
     ]

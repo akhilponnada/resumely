@@ -238,18 +238,18 @@ export async function generateDOCX(data: ResumeData): Promise<Blob> {
     if (data.experience && data.experience.length > 0) {
         addSectionHeader("WORK EXPERIENCE");
         for (const exp of data.experience) {
-            const expHeaderChildren = [
-                new TextRun({ text: `${exp.position.toUpperCase()} | ${exp.company.toUpperCase()} | `, bold: true, size: FONT_SIZE_SECTION, font: FONT, color: TEXT_COLOR }),
+            const expHeaderChildren: (TextRun | ExternalHyperlink)[] = [
+                new TextRun({ text: `${exp.position.toUpperCase()} | ${exp.company.toUpperCase()}`, bold: true, size: FONT_SIZE_SECTION, font: FONT, color: TEXT_COLOR }),
             ];
-            if (exp.link) {
+            // Only add link if one exists
+            if (exp.link && exp.link.trim()) {
+                expHeaderChildren.push(new TextRun({ text: " | ", bold: true, size: FONT_SIZE_SECTION, font: FONT, color: TEXT_COLOR }));
                 expHeaderChildren.push(
                     new ExternalHyperlink({
                         link: exp.link.startsWith("http") ? exp.link : `https://${exp.link}`,
                         children: [new TextRun({ text: "LINK", bold: true, color: LINK_COLOR, size: FONT_SIZE_SECTION, font: FONT })],
                     }) as unknown as TextRun
                 );
-            } else {
-                expHeaderChildren.push(new TextRun({ text: "LINK", bold: true, color: LINK_COLOR, size: FONT_SIZE_SECTION, font: FONT }));
             }
 
             children.push(
@@ -292,18 +292,18 @@ export async function generateDOCX(data: ResumeData): Promise<Blob> {
     if (data.projects && data.projects.length > 0) {
         addSectionHeader("PROJECTS");
         for (const proj of data.projects) {
-            const projHeaderChildren = [
-                new TextRun({ text: `${proj.name} | `, bold: true, size: FONT_SIZE_SECTION, font: FONT, color: TEXT_COLOR }),
+            const projHeaderChildren: (TextRun | ExternalHyperlink)[] = [
+                new TextRun({ text: proj.name, bold: true, size: FONT_SIZE_SECTION, font: FONT, color: TEXT_COLOR }),
             ];
-            if (proj.link) {
+            // Only add link if one exists
+            if (proj.link && proj.link.trim()) {
+                projHeaderChildren.push(new TextRun({ text: " | ", bold: true, size: FONT_SIZE_SECTION, font: FONT, color: TEXT_COLOR }));
                 projHeaderChildren.push(
                     new ExternalHyperlink({
                         link: proj.link.startsWith("http") ? proj.link : `https://${proj.link}`,
                         children: [new TextRun({ text: "LINK", bold: true, color: LINK_COLOR, size: FONT_SIZE_SECTION, font: FONT })],
                     }) as unknown as TextRun
                 );
-            } else {
-                projHeaderChildren.push(new TextRun({ text: "LINK", bold: true, color: LINK_COLOR, size: FONT_SIZE_SECTION, font: FONT }));
             }
 
             children.push(
@@ -347,18 +347,18 @@ export async function generateDOCX(data: ResumeData): Promise<Blob> {
         addSectionHeader("CERTIFICATES");
         for (const cert of data.certifications) {
             const namePart = cert.issuer ? `${cert.name} (${cert.issuer})` : cert.name;
-            const certHeaderChildren = [
-                new TextRun({ text: `${namePart} | `, bold: true, size: FONT_SIZE_SECTION, font: FONT, color: TEXT_COLOR }),
+            const certHeaderChildren: (TextRun | ExternalHyperlink)[] = [
+                new TextRun({ text: namePart, bold: true, size: FONT_SIZE_SECTION, font: FONT, color: TEXT_COLOR }),
             ];
-            if (cert.link) {
+            // Only add certificate link if one exists
+            if (cert.link && cert.link.trim()) {
+                certHeaderChildren.push(new TextRun({ text: " | ", bold: true, size: FONT_SIZE_SECTION, font: FONT, color: TEXT_COLOR }));
                 certHeaderChildren.push(
                     new ExternalHyperlink({
                         link: cert.link.startsWith("http") ? cert.link : `https://${cert.link}`,
-                        children: [new TextRun({ text: "CERTIFICATE", bold: true, color: LINK_COLOR, size: FONT_SIZE_SECTION, font: FONT })],
+                        children: [new TextRun({ text: "VIEW", bold: true, color: LINK_COLOR, size: FONT_SIZE_SECTION, font: FONT })],
                     }) as unknown as TextRun
                 );
-            } else {
-                certHeaderChildren.push(new TextRun({ text: "CERTIFICATE", bold: true, color: LINK_COLOR, size: FONT_SIZE_SECTION, font: FONT }));
             }
 
             children.push(
