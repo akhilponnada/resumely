@@ -242,7 +242,7 @@ export default function ChatPage() {
             <div style={{
                 display: "flex",
                 flexDirection: "column",
-                height: "calc(100vh - 64px)",
+                minHeight: "100vh",
                 background: "linear-gradient(180deg, #fdf2f8 0%, #fce7f3 50%, #fbcfe8 100%)"
             }}>
                 {/* Messages Area */}
