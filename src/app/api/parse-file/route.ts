@@ -134,15 +134,28 @@ export async function POST(req: NextRequest) {
             }
         }
 
-        // Clean up the text - normalize whitespace only
+        // Clean up the text - normalize whitespace and improve formatting
         text = text
-            // Fix spaces around punctuation
-            .replace(/ +([.,;:!?])/g, "$1")
             // Normalize line endings
             .replace(/\r\n/g, "\n")
+            // Fix common PDF extraction issues
+            .replace(/([a-z])([A-Z])/g, "$1 $2") // Fix missing spaces between words
+            .replace(/(\d)([A-Z])/g, "$1 $2") // Fix "2023Software" -> "2023 Software"
+            .replace(/([a-z])(\d)/g, "$1 $2") // Fix "Engineer2023" -> "Engineer 2023"
+            // Fix spaces around punctuation
+            .replace(/ +([.,;:!?])/g, "$1")
+            // Fix bullet points
+            .replace(/[•●○■□▪▸►]/g, "\n• ")
             // Collapse multiple spaces into one (but keep single spaces!)
             .replace(/[ \t]{2,}/g, " ")
-            // Collapse multiple newlines
+            // Collapse multiple newlines but preserve section breaks
+            .replace(/\n{4,}/g, "\n\n\n")
+            .replace(/\n{3}/g, "\n\n")
+            // Clean up lines that are just whitespace
+            .split("\n")
+            .map(line => line.trim())
+            .join("\n")
+            // Final cleanup
             .replace(/\n{3,}/g, "\n\n")
             .trim();
 

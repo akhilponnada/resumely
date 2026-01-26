@@ -5,16 +5,20 @@ import { ResumeData } from "@/lib/types";
 export function ResumePreview({ data }: { data: ResumeData }) {
     const skills = data.skills;
 
+    // A4 dimensions: 210mm x 297mm (8.27in x 11.69in)
     return (
         <div style={{
             background: "#fff",
             color: "#000",
-            padding: "32px 40px",
+            padding: "20px 24px",
             fontFamily: 'Calibri, Arial, sans-serif',
             fontSize: "10px",
-            lineHeight: 1.4,
-            maxWidth: "8.5in",
-            minHeight: "11in",
+            lineHeight: 1.35,
+            width: "210mm",
+            minHeight: "297mm",
+            maxWidth: "210mm",
+            boxSizing: "border-box",
+            margin: "0 auto",
         }}>
             {/* HEADER - Name left, Contact right */}
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "4px" }}>
@@ -50,8 +54,8 @@ export function ResumePreview({ data }: { data: ResumeData }) {
                         fontSize: "10px",
                         fontWeight: "bold",
                         textAlign: "center",
-                        margin: "12px 0 6px",
-                        paddingBottom: "3px",
+                        margin: "8px 0 4px",
+                        paddingBottom: "2px",
                         borderBottom: "1px solid #808080",
                     }}>EDUCATION</h2>
                     {data.education.map((edu, i) => (
@@ -78,8 +82,8 @@ export function ResumePreview({ data }: { data: ResumeData }) {
                         fontSize: "10px",
                         fontWeight: "bold",
                         textAlign: "center",
-                        margin: "12px 0 6px",
-                        paddingBottom: "3px",
+                        margin: "8px 0 4px",
+                        paddingBottom: "2px",
                         borderBottom: "1px solid #808080",
                     }}>SKILLS SUMMARY</h2>
                     <div style={{ paddingLeft: "10px" }}>
@@ -124,8 +128,8 @@ export function ResumePreview({ data }: { data: ResumeData }) {
                         fontSize: "10px",
                         fontWeight: "bold",
                         textAlign: "center",
-                        margin: "12px 0 6px",
-                        paddingBottom: "3px",
+                        margin: "8px 0 4px",
+                        paddingBottom: "2px",
                         borderBottom: "1px solid #808080",
                     }}>WORK EXPERIENCE</h2>
                     {data.experience.map((exp, i) => (
@@ -156,8 +160,8 @@ export function ResumePreview({ data }: { data: ResumeData }) {
                         fontSize: "10px",
                         fontWeight: "bold",
                         textAlign: "center",
-                        margin: "12px 0 6px",
-                        paddingBottom: "3px",
+                        margin: "8px 0 4px",
+                        paddingBottom: "2px",
                         borderBottom: "1px solid #808080",
                     }}>PROJECTS</h2>
                     {data.projects.map((proj, i) => (
@@ -188,8 +192,8 @@ export function ResumePreview({ data }: { data: ResumeData }) {
                         fontSize: "10px",
                         fontWeight: "bold",
                         textAlign: "center",
-                        margin: "12px 0 6px",
-                        paddingBottom: "3px",
+                        margin: "8px 0 4px",
+                        paddingBottom: "2px",
                         borderBottom: "1px solid #808080",
                     }}>CERTIFICATES</h2>
                     {data.certifications.map((cert, i) => (
