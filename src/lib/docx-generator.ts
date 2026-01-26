@@ -278,7 +278,7 @@ export async function generateDOCX(data: ResumeData): Promise<Blob> {
             for (const highlight of exp.highlights || []) {
                 children.push(
                     new Paragraph({
-                        children: [new TextRun({ text: `○  ${highlight}`, size: FONT_SIZE_NORMAL, font: FONT, color: TEXT_COLOR })],
+                        children: [new TextRun({ text: `•  ${highlight}`, size: FONT_SIZE_NORMAL, font: FONT, color: TEXT_COLOR })],
                         indent: { left: convertInchesToTwip(0.2) },
                         spacing: { after: 30 },
                     })
@@ -332,7 +332,7 @@ export async function generateDOCX(data: ResumeData): Promise<Blob> {
             for (const highlight of proj.highlights || []) {
                 children.push(
                     new Paragraph({
-                        children: [new TextRun({ text: `○  ${highlight}`, size: FONT_SIZE_NORMAL, font: FONT, color: TEXT_COLOR })],
+                        children: [new TextRun({ text: `•  ${highlight}`, size: FONT_SIZE_NORMAL, font: FONT, color: TEXT_COLOR })],
                         indent: { left: convertInchesToTwip(0.2) },
                         spacing: { after: 30 },
                     })
@@ -389,7 +389,7 @@ export async function generateDOCX(data: ResumeData): Promise<Blob> {
                 for (const highlight of certWithHighlights.highlights) {
                     children.push(
                         new Paragraph({
-                            children: [new TextRun({ text: `○  ${highlight}`, size: FONT_SIZE_NORMAL, font: FONT, color: TEXT_COLOR })],
+                            children: [new TextRun({ text: `•  ${highlight}`, size: FONT_SIZE_NORMAL, font: FONT, color: TEXT_COLOR })],
                             indent: { left: convertInchesToTwip(0.2) },
                             spacing: { after: 30 },
                         })
