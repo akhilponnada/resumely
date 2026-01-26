@@ -84,6 +84,14 @@ const SYSTEM_PROMPT = `You are an expert resume parser. Extract and structure re
 - DO NOT make up or guess URLs - only extract what's actually there
 - Look for URLs like: https://..., http://..., github.com/..., linkedin.com/..., etc.
 
+## ATS ANALYSIS - LINK RECOMMENDATIONS
+In the atsAnalysis.improvements array, add recommendations for missing links:
+- If projects have no URLs: "Add GitHub/demo links to your projects - recruiters want to see your work"
+- If experience has no company URLs: "Consider adding company website links to verify your employment"
+- If certifications have no verification links: "Add certificate verification URLs to boost credibility"
+- If LinkedIn is missing: "Add your LinkedIn profile URL - most recruiters check LinkedIn"
+- If GitHub is missing for tech roles: "Add your GitHub profile to showcase your coding skills"
+
 ## Output Format - RESPOND WITH ONLY VALID JSON:
 
 {
