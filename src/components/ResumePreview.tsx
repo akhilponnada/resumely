@@ -5,70 +5,106 @@ import { ResumeData } from "@/lib/types";
 export function ResumePreview({ data }: { data: ResumeData }) {
     const skills = data.skills;
 
-    // A4 dimensions: 210mm x 297mm (8.27in x 11.69in)
+    // A4 aspect ratio: 1:1.414 - using pixel dimensions that display well on screen
+    // 595px x 842px is A4 at 72 DPI
     return (
         <div style={{
             background: "#fff",
             color: "#000",
-            padding: "20px 24px",
+            padding: "40px 48px",
             fontFamily: 'Calibri, Arial, sans-serif',
-            fontSize: "10px",
-            lineHeight: 1.35,
-            width: "210mm",
-            minHeight: "297mm",
-            maxWidth: "210mm",
+            fontSize: "13px",
+            lineHeight: 1.5,
+            width: "595px",
+            minHeight: "842px",
             boxSizing: "border-box",
-            margin: "0 auto",
         }}>
             {/* HEADER - Name left, Contact right */}
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "4px" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "16px" }}>
                 <div>
-                    <h1 style={{ fontSize: "14px", fontWeight: "bold", color: "#000", margin: "0 0 2px 0" }}>
+                    <h1 style={{ fontSize: "22px", fontWeight: "bold", color: "#000", margin: "0 0 6px 0" }}>
                         {data.fullName?.toUpperCase() || "FULL NAME"}
                     </h1>
                     {data.linkedin && (
-                        <a href={`https://${data.linkedin.replace(/^https?:\/\//, "")}`}
-                            style={{ display: "block", color: "#2563eb", textDecoration: "underline", fontSize: "9px", lineHeight: 1.5 }}>
-                            {data.fullName?.split(" ")[0]} | LinkedIn
+                        <a
+                            href={data.linkedin.startsWith("http") ? data.linkedin : `https://${data.linkedin}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            style={{ display: "block", color: "#2563eb", textDecoration: "underline", fontSize: "12px", lineHeight: 1.6 }}
+                        >
+                            LinkedIn Profile
                         </a>
                     )}
                     {data.github && (
-                        <a href={`https://${data.github.replace(/^https?:\/\//, "")}`}
-                            style={{ display: "block", color: "#2563eb", textDecoration: "underline", fontSize: "9px", lineHeight: 1.5 }}>
-                            {data.github.replace(/^https?:\/\//, "").replace("github.com/", "")} (github.com)
+                        <a
+                            href={data.github.startsWith("http") ? data.github : `https://${data.github}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            style={{ display: "block", color: "#2563eb", textDecoration: "underline", fontSize: "12px", lineHeight: 1.6 }}
+                        >
+                            GitHub Profile
+                        </a>
+                    )}
+                    {data.website && (
+                        <a
+                            href={data.website.startsWith("http") ? data.website : `https://${data.website}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            style={{ display: "block", color: "#2563eb", textDecoration: "underline", fontSize: "12px", lineHeight: 1.6 }}
+                        >
+                            Portfolio
                         </a>
                     )}
                 </div>
-                <div style={{ textAlign: "right", fontSize: "9px" }}>
+                <div style={{ textAlign: "right", fontSize: "12px" }}>
                     {data.email && (
-                        <div>Email: <a href={`mailto:${data.email}`} style={{ color: "#2563eb", textDecoration: "underline" }}>{data.email}</a></div>
+                        <div>
+                            <a href={`mailto:${data.email}`} style={{ color: "#2563eb", textDecoration: "underline" }}>
+                                {data.email}
+                            </a>
+                        </div>
                     )}
-                    {data.phone && <div>Mobile: {data.phone}</div>}
+                    {data.phone && <div style={{ marginTop: "4px" }}>{data.phone}</div>}
                 </div>
             </div>
 
-            {/* EDUCATION */}
-            {data.education && data.education.length > 0 && (
-                <section>
+            {/* SUMMARY */}
+            {data.summary && (
+                <section style={{ marginBottom: "12px" }}>
                     <h2 style={{
-                        fontSize: "10px",
+                        fontSize: "14px",
                         fontWeight: "bold",
                         textAlign: "center",
-                        margin: "8px 0 4px",
-                        paddingBottom: "2px",
-                        borderBottom: "1px solid #808080",
+                        margin: "0 0 8px",
+                        paddingBottom: "4px",
+                        borderBottom: "1.5px solid #333",
+                    }}>PROFESSIONAL SUMMARY</h2>
+                    <p style={{ fontSize: "12px", textAlign: "justify", margin: 0 }}>{data.summary}</p>
+                </section>
+            )}
+
+            {/* EDUCATION */}
+            {data.education && data.education.length > 0 && (
+                <section style={{ marginBottom: "12px" }}>
+                    <h2 style={{
+                        fontSize: "14px",
+                        fontWeight: "bold",
+                        textAlign: "center",
+                        margin: "0 0 8px",
+                        paddingBottom: "4px",
+                        borderBottom: "1.5px solid #333",
                     }}>EDUCATION</h2>
                     {data.education.map((edu, i) => (
-                        <div key={i} style={{ display: "flex", justifyContent: "space-between", marginBottom: "4px" }}>
+                        <div key={i} style={{ display: "flex", justifyContent: "space-between", marginBottom: "8px" }}>
                             <div>
-                                <div style={{ fontWeight: "bold", fontSize: "10px" }}>{edu.institution}</div>
-                                <div style={{ fontStyle: "italic", fontSize: "9px" }}>
-                                    {edu.degree}{edu.gpa && `; GPA: ${edu.gpa}`}
+                                <div style={{ fontWeight: "bold", fontSize: "13px" }}>{edu.institution}</div>
+                                <div style={{ fontStyle: "italic", fontSize: "12px" }}>
+                                    {edu.degree}{edu.gpa && ` | GPA: ${edu.gpa}`}
                                 </div>
                             </div>
-                            <div style={{ textAlign: "right", fontSize: "9px" }}>
-                                <div>{edu.location}</div>
-                                <div style={{ fontWeight: "bold" }}>{edu.startDate} - {edu.endDate}</div>
+                            <div style={{ textAlign: "right", fontSize: "12px" }}>
+                                {edu.location && <div>{edu.location}</div>}
+                                <div style={{ fontWeight: "500" }}>{edu.startDate} - {edu.endDate}</div>
                             </div>
                         </div>
                     ))}
@@ -77,43 +113,38 @@ export function ResumePreview({ data }: { data: ResumeData }) {
 
             {/* SKILLS SUMMARY */}
             {skills && (
-                <section>
+                <section style={{ marginBottom: "12px" }}>
                     <h2 style={{
-                        fontSize: "10px",
+                        fontSize: "14px",
                         fontWeight: "bold",
                         textAlign: "center",
-                        margin: "8px 0 4px",
-                        paddingBottom: "2px",
-                        borderBottom: "1px solid #808080",
-                    }}>SKILLS SUMMARY</h2>
-                    <div style={{ paddingLeft: "10px" }}>
+                        margin: "0 0 8px",
+                        paddingBottom: "4px",
+                        borderBottom: "1.5px solid #333",
+                    }}>SKILLS</h2>
+                    <div>
                         {skills.languages && skills.languages.length > 0 && (
-                            <div style={{ fontSize: "9px", marginBottom: "2px" }}>
-                                <span style={{ fontSize: "7px", marginRight: "6px" }}>●</span>
+                            <div style={{ fontSize: "12px", marginBottom: "4px" }}>
                                 <strong>Languages:</strong> {skills.languages.join(", ")}
                             </div>
                         )}
                         {skills.frameworks && skills.frameworks.length > 0 && (
-                            <div style={{ fontSize: "9px", marginBottom: "2px" }}>
-                                <span style={{ fontSize: "7px", marginRight: "6px" }}>●</span>
+                            <div style={{ fontSize: "12px", marginBottom: "4px" }}>
                                 <strong>Frameworks:</strong> {skills.frameworks.join(", ")}
                             </div>
                         )}
                         {skills.tools && skills.tools.length > 0 && (
-                            <div style={{ fontSize: "9px", marginBottom: "2px" }}>
-                                <span style={{ fontSize: "7px", marginRight: "6px" }}>●</span>
+                            <div style={{ fontSize: "12px", marginBottom: "4px" }}>
                                 <strong>Tools:</strong> {skills.tools.join(", ")}
                             </div>
                         )}
-                        {skills.libraries && skills.libraries.length > 0 && (
-                            <div style={{ fontSize: "9px", marginBottom: "2px" }}>
-                                <span style={{ fontSize: "7px", marginRight: "6px" }}>●</span>
-                                <strong>Platforms:</strong> {skills.libraries.join(", ")}
+                        {(skills.libraries && skills.libraries.length > 0) || (skills.platforms && skills.platforms.length > 0) ? (
+                            <div style={{ fontSize: "12px", marginBottom: "4px" }}>
+                                <strong>Platforms:</strong> {[...(skills.libraries || []), ...(skills.platforms || [])].join(", ")}
                             </div>
-                        )}
+                        ) : null}
                         {skills.soft && skills.soft.length > 0 && (
-                            <div style={{ fontSize: "9px", marginBottom: "2px" }}>
-                                <span style={{ fontSize: "7px", marginRight: "6px" }}>●</span>
+                            <div style={{ fontSize: "12px", marginBottom: "4px" }}>
                                 <strong>Soft Skills:</strong> {skills.soft.join(", ")}
                             </div>
                         )}
@@ -123,27 +154,39 @@ export function ResumePreview({ data }: { data: ResumeData }) {
 
             {/* WORK EXPERIENCE */}
             {data.experience && data.experience.length > 0 && (
-                <section>
+                <section style={{ marginBottom: "12px" }}>
                     <h2 style={{
-                        fontSize: "10px",
+                        fontSize: "14px",
                         fontWeight: "bold",
                         textAlign: "center",
-                        margin: "8px 0 4px",
-                        paddingBottom: "2px",
-                        borderBottom: "1px solid #808080",
+                        margin: "0 0 8px",
+                        paddingBottom: "4px",
+                        borderBottom: "1.5px solid #333",
                     }}>WORK EXPERIENCE</h2>
                     {data.experience.map((exp, i) => (
-                        <div key={i} style={{ marginBottom: "8px" }}>
+                        <div key={i} style={{ marginBottom: "12px" }}>
                             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
-                                <span style={{ fontWeight: "bold", fontSize: "10px" }}>
-                                    {exp.position.toUpperCase()} | {exp.company.toUpperCase()} | <span style={{ color: "#2563eb" }}>LINK</span>
-                                </span>
-                                <span style={{ fontWeight: "bold", fontSize: "9px" }}>{exp.startDate}- {exp.endDate}</span>
+                                <div style={{ fontWeight: "bold", fontSize: "13px" }}>
+                                    {exp.position} | {exp.company}
+                                    {exp.link && (
+                                        <a
+                                            href={exp.link.startsWith("http") ? exp.link : `https://${exp.link}`}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            style={{ color: "#2563eb", marginLeft: "8px", fontWeight: "normal", fontSize: "11px" }}
+                                        >
+                                            [Link]
+                                        </a>
+                                    )}
+                                </div>
+                                <span style={{ fontSize: "12px", whiteSpace: "nowrap" }}>{exp.startDate} - {exp.endDate}</span>
                             </div>
-                            <ul style={{ margin: "2px 0 0 14px", padding: 0, listStyle: "none" }}>
+                            {exp.location && (
+                                <div style={{ fontSize: "12px", fontStyle: "italic", color: "#555" }}>{exp.location}</div>
+                            )}
+                            <ul style={{ margin: "6px 0 0 0", paddingLeft: "18px" }}>
                                 {exp.highlights?.map((h, j) => (
-                                    <li key={j} style={{ fontSize: "9px", marginBottom: "1px", paddingLeft: "10px", position: "relative", textAlign: "justify" }}>
-                                        <span style={{ position: "absolute", left: 0 }}>○</span>
+                                    <li key={j} style={{ fontSize: "12px", marginBottom: "3px", textAlign: "justify" }}>
                                         {h}
                                     </li>
                                 ))}
@@ -155,27 +198,41 @@ export function ResumePreview({ data }: { data: ResumeData }) {
 
             {/* PROJECTS */}
             {data.projects && data.projects.length > 0 && (
-                <section>
+                <section style={{ marginBottom: "12px" }}>
                     <h2 style={{
-                        fontSize: "10px",
+                        fontSize: "14px",
                         fontWeight: "bold",
                         textAlign: "center",
-                        margin: "8px 0 4px",
-                        paddingBottom: "2px",
-                        borderBottom: "1px solid #808080",
+                        margin: "0 0 8px",
+                        paddingBottom: "4px",
+                        borderBottom: "1.5px solid #333",
                     }}>PROJECTS</h2>
                     {data.projects.map((proj, i) => (
-                        <div key={i} style={{ marginBottom: "8px" }}>
+                        <div key={i} style={{ marginBottom: "12px" }}>
                             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
-                                <span style={{ fontWeight: "bold", fontSize: "10px" }}>
-                                    {proj.name} | <span style={{ color: "#2563eb" }}>LINK</span>
-                                </span>
-                                <span style={{ fontWeight: "bold", fontSize: "9px" }}>{proj.startDate}- {proj.endDate}</span>
+                                <div style={{ fontWeight: "bold", fontSize: "13px" }}>
+                                    {proj.name}
+                                    {proj.technologies && (
+                                        <span style={{ fontWeight: "normal", fontSize: "12px", color: "#555" }}> | {proj.technologies}</span>
+                                    )}
+                                    {proj.link && (
+                                        <a
+                                            href={proj.link.startsWith("http") ? proj.link : `https://${proj.link}`}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            style={{ color: "#2563eb", marginLeft: "8px", fontWeight: "normal", fontSize: "11px" }}
+                                        >
+                                            [Link]
+                                        </a>
+                                    )}
+                                </div>
+                                {(proj.startDate || proj.endDate) && (
+                                    <span style={{ fontSize: "12px", whiteSpace: "nowrap" }}>{proj.startDate} - {proj.endDate}</span>
+                                )}
                             </div>
-                            <ul style={{ margin: "2px 0 0 14px", padding: 0, listStyle: "none" }}>
+                            <ul style={{ margin: "6px 0 0 0", paddingLeft: "18px" }}>
                                 {proj.highlights?.map((h, j) => (
-                                    <li key={j} style={{ fontSize: "9px", marginBottom: "1px", paddingLeft: "10px", position: "relative", textAlign: "justify" }}>
-                                        <span style={{ position: "absolute", left: 0 }}>○</span>
+                                    <li key={j} style={{ fontSize: "12px", marginBottom: "3px", textAlign: "justify" }}>
                                         {h}
                                     </li>
                                 ))}
@@ -189,21 +246,41 @@ export function ResumePreview({ data }: { data: ResumeData }) {
             {data.certifications && data.certifications.length > 0 && (
                 <section>
                     <h2 style={{
-                        fontSize: "10px",
+                        fontSize: "14px",
                         fontWeight: "bold",
                         textAlign: "center",
-                        margin: "8px 0 4px",
-                        paddingBottom: "2px",
-                        borderBottom: "1px solid #808080",
-                    }}>CERTIFICATES</h2>
+                        margin: "0 0 8px",
+                        paddingBottom: "4px",
+                        borderBottom: "1.5px solid #333",
+                    }}>CERTIFICATIONS</h2>
                     {data.certifications.map((cert, i) => (
-                        <div key={i} style={{ marginBottom: "6px" }}>
+                        <div key={i} style={{ marginBottom: "8px" }}>
                             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
-                                <span style={{ fontWeight: "bold", fontSize: "10px" }}>
-                                    {cert.name}{cert.issuer && ` (${cert.issuer})`} | <span style={{ color: "#2563eb" }}>CERTIFICATE</span>
-                                </span>
-                                <span style={{ fontWeight: "bold", fontSize: "9px" }}>{cert.date}</span>
+                                <div style={{ fontWeight: "bold", fontSize: "13px" }}>
+                                    {cert.name}
+                                    {cert.issuer && <span style={{ fontWeight: "normal" }}> ({cert.issuer})</span>}
+                                    {cert.link && (
+                                        <a
+                                            href={cert.link.startsWith("http") ? cert.link : `https://${cert.link}`}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            style={{ color: "#2563eb", marginLeft: "8px", fontWeight: "normal", fontSize: "11px" }}
+                                        >
+                                            [Certificate]
+                                        </a>
+                                    )}
+                                </div>
+                                {cert.date && <span style={{ fontSize: "12px" }}>{cert.date}</span>}
                             </div>
+                            {cert.highlights && cert.highlights.length > 0 && (
+                                <ul style={{ margin: "4px 0 0 0", paddingLeft: "18px" }}>
+                                    {cert.highlights.map((h, j) => (
+                                        <li key={j} style={{ fontSize: "12px", marginBottom: "2px" }}>
+                                            {h}
+                                        </li>
+                                    ))}
+                                </ul>
+                            )}
                         </div>
                     ))}
                 </section>

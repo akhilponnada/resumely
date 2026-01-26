@@ -113,16 +113,14 @@ export default function ResumeViewPage({ params }: { params: Promise<{ id: strin
                     <div style={{
                         border: "1px solid var(--accents-2)",
                         borderRadius: "12px",
-                        overflow: "hidden",
+                        overflow: "auto",
                         boxShadow: "0 4px 24px rgba(0,0,0,0.06)",
-                        background: "#f5f5f5",
-                        padding: "20px",
+                        background: "#e5e5e5",
+                        padding: "24px",
                         display: "flex",
                         justifyContent: "center"
                     }}>
                         <div style={{
-                            transform: "scale(0.85)",
-                            transformOrigin: "top center",
                             boxShadow: "0 4px 20px rgba(0,0,0,0.15)"
                         }}>
                             <ResumePreview data={resume.resumeData} />
