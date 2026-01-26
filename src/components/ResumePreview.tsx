@@ -5,97 +5,78 @@ import { ResumeData } from "@/lib/types";
 export function ResumePreview({ data }: { data: ResumeData }) {
     const skills = data.skills;
 
-    // A4 aspect ratio: 1:1.414 - using pixel dimensions that display well on screen
-    // 794px x 1123px is A4 at 96 DPI (standard screen DPI)
+    // A4 at 96 DPI = 794 x 1123 px
+    // Font sizes converted from pt to px (1pt ≈ 1.33px at 96dpi):
+    // - Name: 20pt = 27px
+    // - Section headers: 14pt = 19px
+    // - Body text: 11pt = 15px
+    // - Small text: 10pt = 13px
     return (
         <div style={{
             background: "#fff",
             color: "#000",
-            padding: "48px 56px",
+            padding: "48px",
             fontFamily: 'Calibri, Arial, sans-serif',
-            fontSize: "14px",
-            lineHeight: 1.5,
+            fontSize: "15px",
+            lineHeight: 1.4,
             width: "794px",
             minHeight: "1123px",
             boxSizing: "border-box",
         }}>
-            {/* HEADER - Name left, Contact right */}
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "20px" }}>
+            {/* HEADER */}
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "16px" }}>
                 <div>
-                    <h1 style={{ fontSize: "28px", fontWeight: "bold", color: "#000", margin: "0 0 8px 0" }}>
+                    <h1 style={{ fontSize: "27px", fontWeight: "bold", color: "#000", margin: "0 0 4px 0" }}>
                         {data.fullName?.toUpperCase() || "FULL NAME"}
                     </h1>
                     {data.linkedin && (
-                        <a
-                            href={data.linkedin.startsWith("http") ? data.linkedin : `https://${data.linkedin}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            style={{ display: "block", color: "#2563eb", textDecoration: "underline", fontSize: "14px", lineHeight: 1.6 }}
-                        >
+                        <a href={data.linkedin.startsWith("http") ? data.linkedin : `https://${data.linkedin}`}
+                            target="_blank" rel="noopener noreferrer"
+                            style={{ display: "block", color: "#2563eb", textDecoration: "underline", fontSize: "13px" }}>
                             LinkedIn Profile
                         </a>
                     )}
                     {data.github && (
-                        <a
-                            href={data.github.startsWith("http") ? data.github : `https://${data.github}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            style={{ display: "block", color: "#2563eb", textDecoration: "underline", fontSize: "14px", lineHeight: 1.6 }}
-                        >
+                        <a href={data.github.startsWith("http") ? data.github : `https://${data.github}`}
+                            target="_blank" rel="noopener noreferrer"
+                            style={{ display: "block", color: "#2563eb", textDecoration: "underline", fontSize: "13px" }}>
                             GitHub Profile
                         </a>
                     )}
                     {data.website && (
-                        <a
-                            href={data.website.startsWith("http") ? data.website : `https://${data.website}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            style={{ display: "block", color: "#2563eb", textDecoration: "underline", fontSize: "14px", lineHeight: 1.6 }}
-                        >
+                        <a href={data.website.startsWith("http") ? data.website : `https://${data.website}`}
+                            target="_blank" rel="noopener noreferrer"
+                            style={{ display: "block", color: "#2563eb", textDecoration: "underline", fontSize: "13px" }}>
                             Portfolio
                         </a>
                     )}
                 </div>
-                <div style={{ textAlign: "right", fontSize: "14px" }}>
+                <div style={{ textAlign: "right", fontSize: "13px" }}>
                     {data.email && (
-                        <div>
-                            <a href={`mailto:${data.email}`} style={{ color: "#2563eb", textDecoration: "underline" }}>
-                                {data.email}
-                            </a>
-                        </div>
+                        <div><a href={`mailto:${data.email}`} style={{ color: "#2563eb", textDecoration: "underline" }}>{data.email}</a></div>
                     )}
-                    {data.phone && <div style={{ marginTop: "4px" }}>{data.phone}</div>}
+                    {data.phone && <div style={{ marginTop: "2px" }}>{data.phone}</div>}
                 </div>
             </div>
 
             {/* SUMMARY */}
             {data.summary && (
-                <section style={{ marginBottom: "12px" }}>
-                    <h2 style={{
-                        fontSize: "16px",
-                        fontWeight: "bold",
-                        textAlign: "center",
-                        margin: "0 0 10px",
-                        paddingBottom: "5px",
-                        borderBottom: "2px solid #333",
-                    }}>PROFESSIONAL SUMMARY</h2>
-                    <p style={{ fontSize: "14px", textAlign: "justify", margin: 0 }}>{data.summary}</p>
+                <section style={{ marginBottom: "14px" }}>
+                    <h2 style={{ fontSize: "19px", fontWeight: "bold", textAlign: "center", margin: "0 0 8px", paddingBottom: "4px", borderBottom: "2px solid #333" }}>
+                        PROFESSIONAL SUMMARY
+                    </h2>
+                    <p style={{ fontSize: "15px", textAlign: "justify", margin: 0 }}>{data.summary}</p>
                 </section>
             )}
 
             {/* EDUCATION */}
             {data.education && data.education.length > 0 && (
-                <section style={{ marginBottom: "12px" }}>
-                    <h2 style={{
-                        fontSize: "16px",
-                        fontWeight: "bold",
-                        textAlign: "center",
-                        margin: "0 0 10px",
-                        paddingBottom: "5px",
-                        borderBottom: "2px solid #333",
-                    }}>EDUCATION</h2>
+                <section style={{ marginBottom: "14px" }}>
+                    <h2 style={{ fontSize: "19px", fontWeight: "bold", textAlign: "center", margin: "0 0 8px", paddingBottom: "4px", borderBottom: "2px solid #333" }}>
+                        EDUCATION
+                    </h2>
                     {data.education.map((edu, i) => (
-                        <div key={i} style={{ display: "flex", justifyContent: "space-between", marginBottom: "8px" }}>
+                        <div key={i} style={{ display: "flex", justifyContent: "space-between", marginBottom: "6px" }}>
                             <div>
                                 <div style={{ fontWeight: "bold", fontSize: "15px" }}>{edu.institution}</div>
                                 <div style={{ fontStyle: "italic", fontSize: "14px" }}>
@@ -104,49 +85,34 @@ export function ResumePreview({ data }: { data: ResumeData }) {
                             </div>
                             <div style={{ textAlign: "right", fontSize: "14px" }}>
                                 {edu.location && <div>{edu.location}</div>}
-                                <div style={{ fontWeight: "500" }}>{edu.startDate} - {edu.endDate}</div>
+                                <div>{edu.startDate} - {edu.endDate}</div>
                             </div>
                         </div>
                     ))}
                 </section>
             )}
 
-            {/* SKILLS SUMMARY */}
+            {/* SKILLS */}
             {skills && (
-                <section style={{ marginBottom: "12px" }}>
-                    <h2 style={{
-                        fontSize: "16px",
-                        fontWeight: "bold",
-                        textAlign: "center",
-                        margin: "0 0 10px",
-                        paddingBottom: "5px",
-                        borderBottom: "2px solid #333",
-                    }}>SKILLS</h2>
+                <section style={{ marginBottom: "14px" }}>
+                    <h2 style={{ fontSize: "19px", fontWeight: "bold", textAlign: "center", margin: "0 0 8px", paddingBottom: "4px", borderBottom: "2px solid #333" }}>
+                        SKILLS
+                    </h2>
                     <div>
                         {skills.languages && skills.languages.length > 0 && (
-                            <div style={{ fontSize: "14px", marginBottom: "4px" }}>
-                                <strong>Languages:</strong> {skills.languages.join(", ")}
-                            </div>
+                            <div style={{ fontSize: "14px", marginBottom: "3px" }}><strong>Languages:</strong> {skills.languages.join(", ")}</div>
                         )}
                         {skills.frameworks && skills.frameworks.length > 0 && (
-                            <div style={{ fontSize: "14px", marginBottom: "4px" }}>
-                                <strong>Frameworks:</strong> {skills.frameworks.join(", ")}
-                            </div>
+                            <div style={{ fontSize: "14px", marginBottom: "3px" }}><strong>Frameworks:</strong> {skills.frameworks.join(", ")}</div>
                         )}
                         {skills.tools && skills.tools.length > 0 && (
-                            <div style={{ fontSize: "14px", marginBottom: "4px" }}>
-                                <strong>Tools:</strong> {skills.tools.join(", ")}
-                            </div>
+                            <div style={{ fontSize: "14px", marginBottom: "3px" }}><strong>Tools:</strong> {skills.tools.join(", ")}</div>
                         )}
-                        {(skills.libraries && skills.libraries.length > 0) || (skills.platforms && skills.platforms.length > 0) ? (
-                            <div style={{ fontSize: "14px", marginBottom: "4px" }}>
-                                <strong>Platforms:</strong> {[...(skills.libraries || []), ...(skills.platforms || [])].join(", ")}
-                            </div>
-                        ) : null}
+                        {((skills.libraries && skills.libraries.length > 0) || (skills.platforms && skills.platforms.length > 0)) && (
+                            <div style={{ fontSize: "14px", marginBottom: "3px" }}><strong>Platforms:</strong> {[...(skills.libraries || []), ...(skills.platforms || [])].join(", ")}</div>
+                        )}
                         {skills.soft && skills.soft.length > 0 && (
-                            <div style={{ fontSize: "14px", marginBottom: "4px" }}>
-                                <strong>Soft Skills:</strong> {skills.soft.join(", ")}
-                            </div>
+                            <div style={{ fontSize: "14px", marginBottom: "3px" }}><strong>Soft Skills:</strong> {skills.soft.join(", ")}</div>
                         )}
                     </div>
                 </section>
@@ -154,41 +120,27 @@ export function ResumePreview({ data }: { data: ResumeData }) {
 
             {/* WORK EXPERIENCE */}
             {data.experience && data.experience.length > 0 && (
-                <section style={{ marginBottom: "12px" }}>
-                    <h2 style={{
-                        fontSize: "16px",
-                        fontWeight: "bold",
-                        textAlign: "center",
-                        margin: "0 0 10px",
-                        paddingBottom: "5px",
-                        borderBottom: "2px solid #333",
-                    }}>WORK EXPERIENCE</h2>
+                <section style={{ marginBottom: "14px" }}>
+                    <h2 style={{ fontSize: "19px", fontWeight: "bold", textAlign: "center", margin: "0 0 8px", paddingBottom: "4px", borderBottom: "2px solid #333" }}>
+                        WORK EXPERIENCE
+                    </h2>
                     {data.experience.map((exp, i) => (
                         <div key={i} style={{ marginBottom: "12px" }}>
                             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
                                 <div style={{ fontWeight: "bold", fontSize: "15px" }}>
                                     {exp.position} | {exp.company}
                                     {exp.link && (
-                                        <a
-                                            href={exp.link.startsWith("http") ? exp.link : `https://${exp.link}`}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            style={{ color: "#2563eb", marginLeft: "8px", fontWeight: "normal", fontSize: "13px" }}
-                                        >
-                                            [Link]
-                                        </a>
+                                        <a href={exp.link.startsWith("http") ? exp.link : `https://${exp.link}`}
+                                            target="_blank" rel="noopener noreferrer"
+                                            style={{ color: "#2563eb", marginLeft: "6px", fontWeight: "normal", fontSize: "13px" }}>[Link]</a>
                                     )}
                                 </div>
-                                <span style={{ fontSize: "14px", whiteSpace: "nowrap" }}>{exp.startDate} - {exp.endDate}</span>
+                                <span style={{ fontSize: "14px" }}>{exp.startDate} - {exp.endDate}</span>
                             </div>
-                            {exp.location && (
-                                <div style={{ fontSize: "14px", fontStyle: "italic", color: "#555" }}>{exp.location}</div>
-                            )}
-                            <ul style={{ margin: "6px 0 0 0", paddingLeft: "18px" }}>
+                            {exp.location && <div style={{ fontSize: "14px", fontStyle: "italic", color: "#444" }}>{exp.location}</div>}
+                            <ul style={{ margin: "4px 0 0 0", paddingLeft: "20px" }}>
                                 {exp.highlights?.map((h, j) => (
-                                    <li key={j} style={{ fontSize: "14px", marginBottom: "3px", textAlign: "justify" }}>
-                                        {h}
-                                    </li>
+                                    <li key={j} style={{ fontSize: "14px", marginBottom: "2px" }}>{h}</li>
                                 ))}
                             </ul>
                         </div>
@@ -198,43 +150,27 @@ export function ResumePreview({ data }: { data: ResumeData }) {
 
             {/* PROJECTS */}
             {data.projects && data.projects.length > 0 && (
-                <section style={{ marginBottom: "12px" }}>
-                    <h2 style={{
-                        fontSize: "16px",
-                        fontWeight: "bold",
-                        textAlign: "center",
-                        margin: "0 0 10px",
-                        paddingBottom: "5px",
-                        borderBottom: "2px solid #333",
-                    }}>PROJECTS</h2>
+                <section style={{ marginBottom: "14px" }}>
+                    <h2 style={{ fontSize: "19px", fontWeight: "bold", textAlign: "center", margin: "0 0 8px", paddingBottom: "4px", borderBottom: "2px solid #333" }}>
+                        PROJECTS
+                    </h2>
                     {data.projects.map((proj, i) => (
                         <div key={i} style={{ marginBottom: "12px" }}>
                             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
                                 <div style={{ fontWeight: "bold", fontSize: "15px" }}>
                                     {proj.name}
-                                    {proj.technologies && (
-                                        <span style={{ fontWeight: "normal", fontSize: "14px", color: "#555" }}> | {proj.technologies}</span>
-                                    )}
+                                    {proj.technologies && <span style={{ fontWeight: "normal", fontSize: "14px", color: "#444" }}> | {proj.technologies}</span>}
                                     {proj.link && (
-                                        <a
-                                            href={proj.link.startsWith("http") ? proj.link : `https://${proj.link}`}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            style={{ color: "#2563eb", marginLeft: "8px", fontWeight: "normal", fontSize: "13px" }}
-                                        >
-                                            [Link]
-                                        </a>
+                                        <a href={proj.link.startsWith("http") ? proj.link : `https://${proj.link}`}
+                                            target="_blank" rel="noopener noreferrer"
+                                            style={{ color: "#2563eb", marginLeft: "6px", fontWeight: "normal", fontSize: "13px" }}>[Link]</a>
                                     )}
                                 </div>
-                                {(proj.startDate || proj.endDate) && (
-                                    <span style={{ fontSize: "14px", whiteSpace: "nowrap" }}>{proj.startDate} - {proj.endDate}</span>
-                                )}
+                                {(proj.startDate || proj.endDate) && <span style={{ fontSize: "14px" }}>{proj.startDate} - {proj.endDate}</span>}
                             </div>
-                            <ul style={{ margin: "6px 0 0 0", paddingLeft: "18px" }}>
+                            <ul style={{ margin: "4px 0 0 0", paddingLeft: "20px" }}>
                                 {proj.highlights?.map((h, j) => (
-                                    <li key={j} style={{ fontSize: "14px", marginBottom: "3px", textAlign: "justify" }}>
-                                        {h}
-                                    </li>
+                                    <li key={j} style={{ fontSize: "14px", marginBottom: "2px" }}>{h}</li>
                                 ))}
                             </ul>
                         </div>
@@ -242,17 +178,12 @@ export function ResumePreview({ data }: { data: ResumeData }) {
                 </section>
             )}
 
-            {/* CERTIFICATES */}
+            {/* CERTIFICATIONS */}
             {data.certifications && data.certifications.length > 0 && (
                 <section>
-                    <h2 style={{
-                        fontSize: "16px",
-                        fontWeight: "bold",
-                        textAlign: "center",
-                        margin: "0 0 10px",
-                        paddingBottom: "5px",
-                        borderBottom: "2px solid #333",
-                    }}>CERTIFICATIONS</h2>
+                    <h2 style={{ fontSize: "19px", fontWeight: "bold", textAlign: "center", margin: "0 0 8px", paddingBottom: "4px", borderBottom: "2px solid #333" }}>
+                        CERTIFICATIONS
+                    </h2>
                     {data.certifications.map((cert, i) => (
                         <div key={i} style={{ marginBottom: "8px" }}>
                             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
@@ -260,27 +191,13 @@ export function ResumePreview({ data }: { data: ResumeData }) {
                                     {cert.name}
                                     {cert.issuer && <span style={{ fontWeight: "normal" }}> ({cert.issuer})</span>}
                                     {cert.link && (
-                                        <a
-                                            href={cert.link.startsWith("http") ? cert.link : `https://${cert.link}`}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            style={{ color: "#2563eb", marginLeft: "8px", fontWeight: "normal", fontSize: "13px" }}
-                                        >
-                                            [Certificate]
-                                        </a>
+                                        <a href={cert.link.startsWith("http") ? cert.link : `https://${cert.link}`}
+                                            target="_blank" rel="noopener noreferrer"
+                                            style={{ color: "#2563eb", marginLeft: "6px", fontWeight: "normal", fontSize: "13px" }}>[View]</a>
                                     )}
                                 </div>
                                 {cert.date && <span style={{ fontSize: "14px" }}>{cert.date}</span>}
                             </div>
-                            {cert.highlights && cert.highlights.length > 0 && (
-                                <ul style={{ margin: "4px 0 0 0", paddingLeft: "18px" }}>
-                                    {cert.highlights.map((h, j) => (
-                                        <li key={j} style={{ fontSize: "14px", marginBottom: "2px" }}>
-                                            {h}
-                                        </li>
-                                    ))}
-                                </ul>
-                            )}
                         </div>
                     ))}
                 </section>
