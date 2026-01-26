@@ -558,7 +558,7 @@ export default function ChatPage() {
                                 alignItems: "center",
                                 gap: "8px",
                                 padding: "8px 12px",
-                                background: "#fff",
+                                background: "rgba(253, 242, 248, 0.95)",
                                 borderRadius: "8px 8px 0 0",
                                 border: "1px solid #f9a8d4",
                                 borderBottom: "none"
@@ -582,7 +582,7 @@ export default function ChatPage() {
                         )}
 
                         <div style={{
-                            background: "rgba(255,255,255,0.9)",
+                            background: "rgba(253, 242, 248, 0.95)",
                             borderRadius: uploadedFile ? "0 0 16px 16px" : "16px",
                             border: "1px solid #f9a8d4",
                             overflow: "hidden",
