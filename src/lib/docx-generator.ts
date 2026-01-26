@@ -24,11 +24,12 @@ const SECTION_LINE_COLOR = "808080";
 const TEXT_COLOR = "000000";
 
 // Font configuration - Calibri matches the reference template
+// DOCX uses half-points: multiply pt by 2 (e.g., 11pt = 22)
 const FONT = "Calibri";
-const FONT_SIZE_NAME = 28;
-const FONT_SIZE_SECTION = 20;
-const FONT_SIZE_NORMAL = 18;
-const FONT_SIZE_SMALL = 16;
+const FONT_SIZE_NAME = 48;      // 24pt for name
+const FONT_SIZE_SECTION = 26;   // 13pt for section headers
+const FONT_SIZE_NORMAL = 22;    // 11pt for body text
+const FONT_SIZE_SMALL = 20;     // 10pt for small text
 
 // Border helpers
 const noBorder = { style: BorderStyle.NONE, size: 0, color: "FFFFFF" };
