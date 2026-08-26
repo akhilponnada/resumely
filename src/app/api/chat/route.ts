@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
-import { AzureOpenAI } from "openai";
+import { getAIClient, AI_DEPLOYMENT } from "@/lib/ai";
 
 export const maxDuration = 60;
 
@@ -26,21 +26,7 @@ function checkRateLimit(userId: string): boolean {
     return true;
 }
 
-// Azure OpenAI client for GPT-5-mini.
-// Built on first request rather than at module scope: module scope is
-// evaluated during `next build`, where AZURE_CLAUDE_API_KEY is absent.
-let client: AzureOpenAI | null = null;
-
-function getClient(): AzureOpenAI {
-    if (!client) {
-        client = new AzureOpenAI({
-            apiKey: process.env.AZURE_CLAUDE_API_KEY!, // Same key works for both
-            endpoint: "https://ai-akhilponnada2047ai102855017871.cognitiveservices.azure.com",
-            apiVersion: "2024-12-01-preview",
-        });
-    }
-    return client;
-}
+// Model + endpoint configuration lives in src/lib/ai.ts.
 
 const SYSTEM_PROMPT = `You are "Resumely", an expert career coach and resume specialist. Your goal is to help users create ATS-optimized, compelling resumes that land interviews.
 
@@ -154,8 +140,8 @@ export async function POST(req: NextRequest) {
         ];
 
         // Stream response from Azure OpenAI GPT-5-mini
-        const stream = await getClient().chat.completions.create({
-            model: "gpt-5-mini",
+        const stream = await getAIClient().chat.completions.create({
+            model: AI_DEPLOYMENT,
             messages: formattedMessages,
             max_completion_tokens: 4096,
             stream: true,

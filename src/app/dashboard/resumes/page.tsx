@@ -14,7 +14,7 @@ export default function ResumesPage() {
     const [search, setSearch] = useState("");
     const [deleting, setDeleting] = useState<string | null>(null);
 
-    const resumes = useQuery(api.resumes.getResumesByUser, user?.id ? { userId: user.id } : "skip");
+    const resumes = useQuery(api.resumes.getResumesByUser, user?.id ? {} : "skip");
     const deleteResume = useMutation(api.resumes.deleteResume);
 
     const filtered = resumes?.filter((r) => r.title.toLowerCase().includes(search.toLowerCase()));

@@ -9,7 +9,7 @@ import { Plus, FileText, TrendingUp, Clock, ArrowRight, Sparkles } from "lucide-
 
 export default function Dashboard() {
     const { user } = useUser();
-    const resumes = useQuery(api.resumes.getResumesByUser, user?.id ? { userId: user.id } : "skip");
+    const resumes = useQuery(api.resumes.getResumesByUser, user?.id ? {} : "skip");
 
     const totalResumes = resumes?.length || 0;
     const averageATS = resumes && resumes.length > 0

@@ -14,7 +14,14 @@ export default defineSchema({
     rawInput: v.string(),
     jobDescription: v.optional(v.string()),
     atsScore: v.optional(v.number()),
-    // DOCX generation status: pending, generating, ready, failed
+    // Strengths / improvements / keyword matches produced alongside atsScore.
+    atsAnalysis: v.optional(v.object({
+      strengths: v.optional(v.array(v.string())),
+      improvements: v.optional(v.array(v.string())),
+      keywordMatches: v.optional(v.array(v.string())),
+    })),
+    // Retained so existing rows validate; DOCX generation is synchronous and
+    // never updates these.
     docxStatus: v.optional(v.string()),
     docxError: v.optional(v.string()),
     resumeData: v.object({

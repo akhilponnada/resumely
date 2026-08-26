@@ -160,7 +160,6 @@ export default function ChatPage() {
             if (!currentChatId) {
                 const title = content.split(" ").slice(0, 5).join(" ") + (content.split(" ").length > 5 ? "..." : "");
                 currentChatId = await createChat({
-                    userId: user.id,
                     title: title
                 });
                 setChatId(currentChatId);

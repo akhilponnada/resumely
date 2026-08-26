@@ -1,14 +1,15 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
+import { requireUserId, requireOwned } from "./authz";
 
 export const createChat = mutation({
     args: {
-        userId: v.string(),
         title: v.string(),
     },
     handler: async (ctx, args) => {
+        const userId = await requireUserId(ctx);
         const chatId = await ctx.db.insert("chats", {
-            userId: args.userId,
+            userId,
             title: args.title,
             lastMessageAt: Date.now(),
             createdAt: Date.now(),
@@ -17,12 +18,14 @@ export const createChat = mutation({
     },
 });
 
+// No userId argument: the caller is whoever the token says they are.
 export const getChats = query({
-    args: { userId: v.string() },
-    handler: async (ctx, args) => {
+    args: {},
+    handler: async (ctx) => {
+        const userId = await requireUserId(ctx);
         return await ctx.db
             .query("chats")
-            .withIndex("by_userId_lastMessageAt", (q) => q.eq("userId", args.userId))
+            .withIndex("by_userId_lastMessageAt", (q) => q.eq("userId", userId))
             .order("desc")
             .collect();
     },
@@ -31,6 +34,9 @@ export const getChats = query({
 export const deleteChat = mutation({
     args: { id: v.id("chats") },
     handler: async (ctx, args) => {
+        const userId = await requireUserId(ctx);
+        await requireOwned(ctx, await ctx.db.get(args.id), userId);
+
         // Delete messages first
         const messages = await ctx.db
             .query("messages")
@@ -49,6 +55,8 @@ export const deleteChat = mutation({
 export const updateChatTitle = mutation({
     args: { id: v.id("chats"), title: v.string() },
     handler: async (ctx, args) => {
+        const userId = await requireUserId(ctx);
+        await requireOwned(ctx, await ctx.db.get(args.id), userId);
         await ctx.db.patch(args.id, { title: args.title });
     },
 });

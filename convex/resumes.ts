@@ -1,5 +1,6 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
+import { requireUserId, requireOwned } from "./authz";
 
 const resumeDataValidator = v.object({
     fullName: v.string(),
@@ -51,43 +52,35 @@ const resumeDataValidator = v.object({
     }))),
 });
 
+// The model already produces this alongside atsScore; it used to be discarded.
+const atsAnalysisValidator = v.object({
+    strengths: v.optional(v.array(v.string())),
+    improvements: v.optional(v.array(v.string())),
+    keywordMatches: v.optional(v.array(v.string())),
+});
+
 export const createResume = mutation({
     args: {
-        userId: v.string(),
         title: v.string(),
         rawInput: v.string(),
         jobDescription: v.optional(v.string()),
         atsScore: v.optional(v.number()),
+        atsAnalysis: v.optional(atsAnalysisValidator),
         resumeData: resumeDataValidator,
-        docxStatus: v.optional(v.string()),
     },
     handler: async (ctx, args) => {
+        const userId = await requireUserId(ctx);
         const now = Date.now();
         return await ctx.db.insert("resumes", {
-            userId: args.userId,
+            userId,
             title: args.title,
             rawInput: args.rawInput,
             jobDescription: args.jobDescription,
             atsScore: args.atsScore,
+            atsAnalysis: args.atsAnalysis,
             resumeData: args.resumeData,
-            docxStatus: args.docxStatus || "pending",
             createdAt: now,
             updatedAt: now,
-        });
-    },
-});
-
-export const updateDocxStatus = mutation({
-    args: {
-        id: v.id("resumes"),
-        docxStatus: v.string(),
-        docxError: v.optional(v.string()),
-    },
-    handler: async (ctx, args) => {
-        await ctx.db.patch(args.id, {
-            docxStatus: args.docxStatus,
-            docxError: args.docxError,
-            updatedAt: Date.now(),
         });
     },
 });
@@ -99,12 +92,16 @@ export const updateResume = mutation({
         rawInput: v.optional(v.string()),
         jobDescription: v.optional(v.string()),
         atsScore: v.optional(v.number()),
+        atsAnalysis: v.optional(atsAnalysisValidator),
         resumeData: v.optional(resumeDataValidator),
     },
     handler: async (ctx, args) => {
+        const userId = await requireUserId(ctx);
         const { id, ...updates } = args;
+        await requireOwned(ctx, await ctx.db.get(id), userId);
+
         const filteredUpdates = Object.fromEntries(
-            Object.entries(updates).filter(([, v]) => v !== undefined)
+            Object.entries(updates).filter(([, value]) => value !== undefined)
         );
         await ctx.db.patch(id, {
             ...filteredUpdates,
@@ -116,16 +113,20 @@ export const updateResume = mutation({
 export const deleteResume = mutation({
     args: { id: v.id("resumes") },
     handler: async (ctx, args) => {
+        const userId = await requireUserId(ctx);
+        await requireOwned(ctx, await ctx.db.get(args.id), userId);
         await ctx.db.delete(args.id);
     },
 });
 
+// No userId argument: the caller is whoever the token says they are.
 export const getResumesByUser = query({
-    args: { userId: v.string() },
-    handler: async (ctx, args) => {
+    args: {},
+    handler: async (ctx) => {
+        const userId = await requireUserId(ctx);
         return await ctx.db
             .query("resumes")
-            .withIndex("by_userId", (q) => q.eq("userId", args.userId))
+            .withIndex("by_userId", (q) => q.eq("userId", userId))
             .order("desc")
             .collect();
     },
@@ -134,6 +135,7 @@ export const getResumesByUser = query({
 export const getResumeById = query({
     args: { id: v.id("resumes") },
     handler: async (ctx, args) => {
-        return await ctx.db.get(args.id);
+        const userId = await requireUserId(ctx);
+        return await requireOwned(ctx, await ctx.db.get(args.id), userId);
     },
 });

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
-import { AzureOpenAI } from "openai";
+import { getAIClient, AI_DEPLOYMENT } from "@/lib/ai";
 
 // Rate limiting
 const rateLimitMap = new Map<string, { count: number; resetTime: number }>();
@@ -24,21 +24,7 @@ function checkRateLimit(userId: string): boolean {
   return true;
 }
 
-// Azure OpenAI client for GPT-5-mini (fast fact extraction).
-// Built on first request rather than at module scope: module scope is
-// evaluated during `next build`, where AZURE_CLAUDE_API_KEY is absent.
-let client: AzureOpenAI | null = null;
-
-function getClient(): AzureOpenAI {
-  if (!client) {
-    client = new AzureOpenAI({
-      apiKey: process.env.AZURE_CLAUDE_API_KEY!,
-      endpoint: "https://ai-akhilponnada2047ai102855017871.cognitiveservices.azure.com",
-      apiVersion: "2024-12-01-preview",
-    });
-  }
-  return client;
-}
+// Model + endpoint configuration lives in src/lib/ai.ts.
 
 // Input validation constants
 const MAX_RAW_INPUT_LENGTH = 50000;
@@ -283,8 +269,8 @@ export async function POST(request: NextRequest) {
       : `Raw Resume Information:\n${rawInput.trim()}`;
 
     // Use GPT-5-mini for fast fact extraction
-    const response = await getClient().chat.completions.create({
-      model: "gpt-5-mini",
+    const response = await getAIClient().chat.completions.create({
+      model: AI_DEPLOYMENT,
       messages: [
         { role: "system", content: SYSTEM_PROMPT },
         { role: "user", content: userMessage }

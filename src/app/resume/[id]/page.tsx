@@ -14,16 +14,16 @@ export default function ResumeViewPage({ params }: { params: Promise<{ id: strin
     const { id } = use(params);
     const router = useRouter();
     const [tab, setTab] = useState<"preview" | "data">("preview");
-    const [downloading, setDownloading] = useState(false);
+    const [downloading, setDownloading] = useState<"docx" | "pdf" | null>(null);
 
     const resume = useQuery(api.resumes.getResumeById, { id: id as Id<"resumes"> });
 
-    const downloadDOCX = async () => {
+    const download = async (format: "docx" | "pdf") => {
         if (!resume) return;
-        setDownloading(true);
+        setDownloading(format);
 
         try {
-            const response = await fetch("/api/generate-docx", {
+            const response = await fetch(`/api/generate-${format}`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ resumeData: resume.resumeData }),
@@ -31,15 +31,16 @@ export default function ResumeViewPage({ params }: { params: Promise<{ id: strin
 
             if (!response.ok) {
                 const error = await response.json();
-                throw new Error(error.error || "Failed to generate DOCX");
+                throw new Error(error.error || `Failed to generate ${format.toUpperCase()}`);
             }
 
             const blob = await response.blob();
-            saveAs(blob, `${resume.resumeData.fullName.replace(/\s+/g, "_")}_Resume.docx`);
+            const name = resume.resumeData.fullName.replace(/\s+/g, "_");
+            saveAs(blob, `${name}_Resume.${format}`);
         } catch (err) {
-            alert(err instanceof Error ? err.message : "Failed to generate DOCX");
+            alert(err instanceof Error ? err.message : `Failed to generate ${format.toUpperCase()}`);
         } finally {
-            setDownloading(false);
+            setDownloading(null);
         }
     };
 
@@ -90,9 +91,14 @@ export default function ResumeViewPage({ params }: { params: Promise<{ id: strin
                                 </div>
                             )}
 
-                            <button onClick={downloadDOCX} disabled={downloading} className="btn btn-primary" style={{ height: "40px" }}>
-                                {downloading ? <Loader2 size={16} className="loader" /> : <FileType size={16} />}
-                                {downloading ? "Generating..." : "Download DOCX"}
+                            <button onClick={() => download("pdf")} disabled={downloading !== null} className="btn btn-primary" style={{ height: "40px" }}>
+                                {downloading === "pdf" ? <Loader2 size={16} className="loader" /> : <FileType size={16} />}
+                                {downloading === "pdf" ? "Generating..." : "Download PDF"}
+                            </button>
+
+                            <button onClick={() => download("docx")} disabled={downloading !== null} className="btn btn-ghost" style={{ height: "40px" }}>
+                                {downloading === "docx" ? <Loader2 size={16} className="loader" /> : <FileType size={16} />}
+                                {downloading === "docx" ? "Generating..." : "Download DOCX"}
                             </button>
                         </div>
                     </div>

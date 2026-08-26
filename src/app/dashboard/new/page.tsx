@@ -77,11 +77,11 @@ export default function NewResumePage() {
             if (data.error) throw new Error(data.error);
 
             const id = await createResume({
-                userId: user?.id || "",
                 title: data.suggestedTitle || "My Resume",
                 rawInput,
                 jobDescription: jobDescription || undefined,
                 atsScore: data.atsScore,
+                atsAnalysis: data.atsAnalysis,
                 resumeData: data.resumeData,
             });
             router.push(`/resume/${id}`);

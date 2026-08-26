@@ -28,10 +28,10 @@ export function Sidebar() {
     const [showChats, setShowChats] = useState(true);
     const menuRef = useRef<HTMLDivElement>(null);
 
-    // Chat queries with Clerk userId
+    // The signed-in user is derived from the Clerk token on the backend.
     const chats = useQuery(
         api.chats.getChats,
-        user?.id ? { userId: user.id } : "skip"
+        user?.id ? {} : "skip"
     );
     const deleteChat = useMutation(api.chats.deleteChat);
 
