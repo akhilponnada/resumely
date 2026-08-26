@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { getAIClient, AI_DEPLOYMENT } from "@/lib/ai";
+import { computeATS } from "@/lib/ats";
+import { ResumeData } from "@/lib/types";
 
 // Rate limiting
 const rateLimitMap = new Map<string, { count: number; resetTime: number }>();
@@ -162,14 +164,16 @@ In the atsAnalysis.improvements array, add recommendations for missing links:
       }
     ]
   },
-  "atsScore": 85,
   "atsAnalysis": {
     "strengths": ["Strength 1"],
-    "improvements": ["Improvement 1"],
-    "keywordMatches": []
+    "improvements": ["Improvement 1"]
   },
   "suggestedTitle": "Job Title Resume"
 }
+
+DO NOT output an atsScore. The score is calculated from the extracted data, not
+estimated. Use atsAnalysis only for qualitative advice a calculation cannot give:
+what reads well, and what the person should rewrite or add.
 
 REMEMBER: All text must have proper spacing between words. Never concatenate words together.
 IMPORTANT: certifications must be an array of OBJECTS, not strings. Each certification needs name, issuer, date fields.`;
@@ -287,7 +291,33 @@ export async function POST(request: NextRequest) {
     // Parse JSON response and normalize data
     try {
       const parsed = JSON.parse(content);
-      const normalized = normalizeResumeData(parsed);
+      const normalized = normalizeResumeData(parsed) as Record<string, unknown>;
+      const resumeData = (normalized.resumeData ?? normalized) as ResumeData;
+
+      // The model occasionally returns a shell with every field blank. Saving
+      // that produces a resume with no name, no contact details and no history,
+      // so reject it here rather than persisting an empty record.
+      const hasContent =
+        Boolean(resumeData?.fullName?.trim()) ||
+        (resumeData?.experience?.length ?? 0) > 0 ||
+        (resumeData?.education?.length ?? 0) > 0;
+
+      if (!hasContent) {
+        return NextResponse.json(
+          { error: "Could not read any details from that input. Try pasting more of your resume, or add your name, roles and dates." },
+          { status: 422 }
+        );
+      }
+
+      // Score deterministically instead of trusting the number the model made
+      // up: the same resume must always score the same, and every deduction
+      // has to be explainable to the user.
+      const ats = computeATS(resumeData, jobDescription);
+      normalized.atsScore = ats.score;
+      normalized.atsChecks = ats.checks;
+      normalized.matchedKeywords = ats.matchedKeywords;
+      normalized.missingKeywords = ats.missingKeywords;
+
       return NextResponse.json(normalized);
     } catch (parseError) {
       console.error("Failed to parse AI response:", parseError);

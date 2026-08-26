@@ -52,12 +52,22 @@ const resumeDataValidator = v.object({
     }))),
 });
 
-// The model already produces this alongside atsScore; it used to be discarded.
+// Qualitative advice from the model; used to be discarded.
 const atsAnalysisValidator = v.object({
     strengths: v.optional(v.array(v.string())),
     improvements: v.optional(v.array(v.string())),
     keywordMatches: v.optional(v.array(v.string())),
 });
+
+// Deterministic breakdown behind the score.
+const atsChecksValidator = v.array(v.object({
+    id: v.string(),
+    label: v.string(),
+    points: v.number(),
+    max: v.number(),
+    status: v.string(),
+    detail: v.string(),
+}));
 
 export const createResume = mutation({
     args: {
@@ -66,6 +76,9 @@ export const createResume = mutation({
         jobDescription: v.optional(v.string()),
         atsScore: v.optional(v.number()),
         atsAnalysis: v.optional(atsAnalysisValidator),
+        atsChecks: v.optional(atsChecksValidator),
+        matchedKeywords: v.optional(v.array(v.string())),
+        missingKeywords: v.optional(v.array(v.string())),
         resumeData: resumeDataValidator,
     },
     handler: async (ctx, args) => {
@@ -78,6 +91,9 @@ export const createResume = mutation({
             jobDescription: args.jobDescription,
             atsScore: args.atsScore,
             atsAnalysis: args.atsAnalysis,
+            atsChecks: args.atsChecks,
+            matchedKeywords: args.matchedKeywords,
+            missingKeywords: args.missingKeywords,
             resumeData: args.resumeData,
             createdAt: now,
             updatedAt: now,

@@ -14,12 +14,24 @@ export default defineSchema({
     rawInput: v.string(),
     jobDescription: v.optional(v.string()),
     atsScore: v.optional(v.number()),
-    // Strengths / improvements / keyword matches produced alongside atsScore.
+    // Qualitative advice from the model.
     atsAnalysis: v.optional(v.object({
       strengths: v.optional(v.array(v.string())),
       improvements: v.optional(v.array(v.string())),
       keywordMatches: v.optional(v.array(v.string())),
     })),
+    // Deterministic per-category breakdown behind atsScore, so the number can
+    // be explained rather than just displayed.
+    atsChecks: v.optional(v.array(v.object({
+      id: v.string(),
+      label: v.string(),
+      points: v.number(),
+      max: v.number(),
+      status: v.string(),
+      detail: v.string(),
+    }))),
+    matchedKeywords: v.optional(v.array(v.string())),
+    missingKeywords: v.optional(v.array(v.string())),
     // Retained so existing rows validate; DOCX generation is synchronous and
     // never updates these.
     docxStatus: v.optional(v.string()),

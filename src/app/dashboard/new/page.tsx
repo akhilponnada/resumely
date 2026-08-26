@@ -82,6 +82,9 @@ export default function NewResumePage() {
                 jobDescription: jobDescription || undefined,
                 atsScore: data.atsScore,
                 atsAnalysis: data.atsAnalysis,
+                atsChecks: data.atsChecks,
+                matchedKeywords: data.matchedKeywords,
+                missingKeywords: data.missingKeywords,
                 resumeData: data.resumeData,
             });
             router.push(`/resume/${id}`);

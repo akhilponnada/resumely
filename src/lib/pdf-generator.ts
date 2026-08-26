@@ -26,6 +26,12 @@ export async function generatePDF(data: ResumeData): Promise<Blob> {
         doc.text(text, x, y, { align });
     };
 
+    // Right-aligned runs (dates, locations) share a baseline with left-aligned
+    // text, and some PDF text extractors concatenate adjacent runs with no
+    // separator - turning "Amazon" + "Dunfermline" into "AmazonDunfermline" and
+    // breaking keyword and date matching downstream. Every right-aligned draw
+    // below therefore carries a leading space.
+
     const addSectionLine = () => {
         doc.setDrawColor(0);
         doc.setLineWidth(0.5);
@@ -90,7 +96,7 @@ export async function generatePDF(data: ResumeData): Promise<Blob> {
             doc.text(edu.institution, margin, y);
             if (edu.location) {
                 doc.setFont("times", "normal");
-                doc.text(edu.location, pageWidth - margin, y, { align: "right" });
+                doc.text(` ${edu.location}`, pageWidth - margin, y, { align: "right" });
             }
             y += 12;
 
@@ -99,7 +105,7 @@ export async function generatePDF(data: ResumeData): Promise<Blob> {
             const degreeText = edu.gpa ? `${edu.degree}; GPA: ${edu.gpa}` : edu.degree;
             doc.text(degreeText, margin, y);
             if (edu.startDate || edu.endDate) {
-                doc.text(`${edu.startDate || ""} – ${edu.endDate || ""}`, pageWidth - margin, y, { align: "right" });
+                doc.text(` ${edu.startDate || ""} – ${edu.endDate || ""}`, pageWidth - margin, y, { align: "right" });
             }
             y += 14;
         }
@@ -122,7 +128,7 @@ export async function generatePDF(data: ResumeData): Promise<Blob> {
             doc.text(exp.position, margin, y);
             if (exp.startDate || exp.endDate) {
                 doc.setFont("times", "italic");
-                doc.text(`${exp.startDate || ""} – ${exp.endDate || ""}`, pageWidth - margin, y, { align: "right" });
+                doc.text(` ${exp.startDate || ""} – ${exp.endDate || ""}`, pageWidth - margin, y, { align: "right" });
             }
             y += 12;
 
@@ -130,7 +136,7 @@ export async function generatePDF(data: ResumeData): Promise<Blob> {
             doc.setFontSize(9);
             doc.text(exp.company, margin, y);
             if (exp.location) {
-                doc.text(exp.location, pageWidth - margin, y, { align: "right" });
+                doc.text(` ${exp.location}`, pageWidth - margin, y, { align: "right" });
             }
             y += 12;
 
@@ -170,7 +176,7 @@ export async function generatePDF(data: ResumeData): Promise<Blob> {
             }
             if (project.startDate || project.endDate) {
                 doc.setFont("times", "italic");
-                doc.text(`${project.startDate || ""} – ${project.endDate || ""}`, pageWidth - margin, y, { align: "right" });
+                doc.text(` ${project.startDate || ""} – ${project.endDate || ""}`, pageWidth - margin, y, { align: "right" });
             }
             y += 12;
 
@@ -208,7 +214,7 @@ export async function generatePDF(data: ResumeData): Promise<Blob> {
             doc.text(certTitle, margin, y);
             if (cert.date) {
                 doc.setFont("times", "italic");
-                doc.text(cert.date, pageWidth - margin, y, { align: "right" });
+                doc.text(` ${cert.date}`, pageWidth - margin, y, { align: "right" });
             }
             y += 14;
         }

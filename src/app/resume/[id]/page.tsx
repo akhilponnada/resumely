@@ -7,13 +7,14 @@ import { ResumePreview } from "@/components/ResumePreview";
 import { useQuery } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
 import { saveAs } from "file-saver";
-import { ArrowLeft, FileType, Loader2, Eye, Code, Check, AlertTriangle } from "lucide-react";
+import { ArrowLeft, FileType, Loader2, Eye, Code, Check, AlertTriangle, Gauge } from "lucide-react";
+import { ATSReport } from "@/components/ATSReport";
 import { Id } from "../../../../convex/_generated/dataModel";
 
 export default function ResumeViewPage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = use(params);
     const router = useRouter();
-    const [tab, setTab] = useState<"preview" | "data">("preview");
+    const [tab, setTab] = useState<"preview" | "ats" | "data">("preview");
     const [downloading, setDownloading] = useState<"docx" | "pdf" | null>(null);
 
     const resume = useQuery(api.resumes.getResumeById, { id: id as Id<"resumes"> });
@@ -109,13 +110,25 @@ export default function ResumeViewPage({ params }: { params: Promise<{ id: strin
                     <button className={`tab ${tab === "preview" ? "active" : ""}`} onClick={() => setTab("preview")}>
                         <Eye size={16} /> Preview
                     </button>
+                    <button className={`tab ${tab === "ats" ? "active" : ""}`} onClick={() => setTab("ats")}>
+                        <Gauge size={16} /> ATS Report
+                    </button>
                     <button className={`tab ${tab === "data" ? "active" : ""}`} onClick={() => setTab("data")}>
                         <Code size={16} /> Raw Data
                     </button>
                 </div>
 
                 {/* Content */}
-                {tab === "preview" ? (
+                {tab === "ats" ? (
+                    <ATSReport
+                        score={resume.atsScore}
+                        checks={resume.atsChecks}
+                        matchedKeywords={resume.matchedKeywords}
+                        missingKeywords={resume.missingKeywords}
+                        strengths={resume.atsAnalysis?.strengths}
+                        improvements={resume.atsAnalysis?.improvements}
+                    />
+                ) : tab === "preview" ? (
                     <div style={{
                         border: "1px solid var(--accents-2)",
                         borderRadius: "12px",
