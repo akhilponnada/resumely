@@ -5,7 +5,7 @@ import { useUser } from "@clerk/nextjs";
 import { useQuery } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import Link from "next/link";
-import { Plus, FileText, TrendingUp, Clock, ArrowRight, Sparkles } from "lucide-react";
+import { Plus, FileText, TrendingUp, Clock, ArrowRight, Sparkles, Briefcase } from "lucide-react";
 
 export default function Dashboard() {
     const { user } = useUser();
@@ -65,7 +65,7 @@ export default function Dashboard() {
                         Welcome back{user?.firstName ? `, ${user.firstName}` : ""}
                     </h1>
                     <p style={{ color: "var(--accents-5)", fontSize: "15px" }}>
-                        Manage your AI-powered resumes
+                        Manage resumes and match them to live roles
                     </p>
                 </div>
 
@@ -111,7 +111,7 @@ export default function Dashboard() {
                         </div>
                     </div>
 
-                    <Link href="/dashboard/new" className="card" style={{
+                    <Link href="/dashboard/jobs" className="card" style={{
                         background: "var(--geist-foreground)",
                         color: "var(--geist-background)",
                         display: "flex",
@@ -128,11 +128,11 @@ export default function Dashboard() {
                             alignItems: "center",
                             justifyContent: "center"
                         }}>
-                            <Plus size={22} color="white" />
+                            <Briefcase size={22} color="white" />
                         </div>
                         <div>
-                            <div style={{ fontSize: "18px", fontWeight: 500 }}>New Resume</div>
-                            <div style={{ fontSize: "14px", opacity: 0.7 }}>Create with AI</div>
+                            <div style={{ fontSize: "18px", fontWeight: 500 }}>Find jobs</div>
+                            <div style={{ fontSize: "14px", opacity: 0.7 }}>Match your resume</div>
                         </div>
                     </Link>
                 </div>

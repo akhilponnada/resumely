@@ -10,6 +10,10 @@
 
 import type * as authz from "../authz.js";
 import type * as chats from "../chats.js";
+import type * as crons from "../crons.js";
+import type * as jobSources from "../jobSources.js";
+import type * as jobSync from "../jobSync.js";
+import type * as jobs from "../jobs.js";
 import type * as messages from "../messages.js";
 import type * as resumes from "../resumes.js";
 
@@ -22,6 +26,10 @@ import type {
 declare const fullApi: ApiFromModules<{
   authz: typeof authz;
   chats: typeof chats;
+  crons: typeof crons;
+  jobSources: typeof jobSources;
+  jobSync: typeof jobSync;
+  jobs: typeof jobs;
   messages: typeof messages;
   resumes: typeof resumes;
 }>;

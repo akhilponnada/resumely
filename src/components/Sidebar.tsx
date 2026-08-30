@@ -11,6 +11,7 @@ import {
     LayoutDashboard,
     FilePlus,
     Files,
+    Briefcase,
     MessageSquare,
     LogOut,
     ChevronDown,
@@ -37,6 +38,7 @@ export function Sidebar() {
 
     const navItems = [
         { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+        { name: "Jobs", href: "/dashboard/jobs", icon: Briefcase },
         { name: "Create Resume", href: "/dashboard/new", icon: FilePlus },
         { name: "My Resumes", href: "/dashboard/resumes", icon: Files },
     ];

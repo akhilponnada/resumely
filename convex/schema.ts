@@ -106,4 +106,51 @@ export default defineSchema({
     content: v.string(),
     createdAt: v.number(),
   }).index("by_chatId", ["chatId"]),
+
+  // Aggregated live roles from public ATS boards (Greenhouse / Lever / Ashby)
+  // and open job feeds. source + sourceId is the natural key of a posting.
+  jobs: defineTable({
+    source: v.string(),
+    sourceId: v.string(),
+    company: v.string(),
+    companyLogo: v.optional(v.string()),
+    title: v.string(),
+    location: v.string(),
+    workplace: v.string(),
+    department: v.optional(v.string()),
+    descriptionText: v.string(),
+    applyUrl: v.string(),
+    salary: v.optional(v.string()),
+    tags: v.array(v.string()),
+    postedAt: v.number(),
+    scrapedAt: v.number(),
+    isActive: v.boolean(),
+    searchText: v.string(),
+  })
+    .index("by_source_sourceId", ["source", "sourceId"])
+    .index("by_active_postedAt", ["isActive", "postedAt"])
+    .index("by_workplace_active_postedAt", ["workplace", "isActive", "postedAt"])
+    .index("by_company", ["company"])
+    .index("by_scrapedAt", ["scrapedAt"])
+    .searchIndex("search_jobs", {
+      searchField: "searchText",
+      filterFields: ["isActive", "workplace"],
+    }),
+
+  savedJobs: defineTable({
+    userId: v.string(),
+    jobId: v.id("jobs"),
+    createdAt: v.number(),
+  })
+    .index("by_userId", ["userId"])
+    .index("by_user_job", ["userId", "jobId"]),
+
+  crawlRuns: defineTable({
+    startedAt: v.number(),
+    finishedAt: v.optional(v.number()),
+    status: v.string(),
+    upserted: v.optional(v.number()),
+    activeJobs: v.optional(v.number()),
+    error: v.optional(v.string()),
+  }).index("by_startedAt", ["startedAt"]),
 });

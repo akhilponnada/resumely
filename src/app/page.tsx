@@ -3,8 +3,9 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@clerk/nextjs";
-import { FileText, ArrowRight, Shield, Zap, Sparkles } from "lucide-react";
+import { FileText, ArrowRight, Shield, Zap, Sparkles, Briefcase } from "lucide-react";
 import Link from "next/link";
+import { SiteHeader } from "@/components/SiteHeader";
 
 export default function LandingPage() {
   const { isSignedIn, isLoaded } = useAuth();
@@ -26,37 +27,7 @@ export default function LandingPage() {
 
   return (
     <div style={{ minHeight: "100vh" }}>
-      {/* Header */}
-      <header style={{
-        padding: "16px 48px",
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "center",
-        borderBottom: "1px solid var(--accents-2)"
-      }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-          <div style={{
-            width: "36px",
-            height: "36px",
-            background: "var(--violet)",
-            borderRadius: "8px",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center"
-          }}>
-            <FileText size={18} color="white" />
-          </div>
-          <span style={{ fontSize: "18px", fontWeight: 600 }}>Resumely</span>
-        </div>
-        <div style={{ display: "flex", gap: "12px" }}>
-          <Link href="/sign-in" className="btn btn-secondary">
-            Sign In
-          </Link>
-          <Link href="/sign-up" className="btn btn-primary">
-            Get Started <ArrowRight size={16} />
-          </Link>
-        </div>
-      </header>
+      <SiteHeader />
 
       {/* Hero */}
       <main style={{ padding: "80px 48px", maxWidth: "1200px", margin: "0 auto" }}>
@@ -72,7 +43,7 @@ export default function LandingPage() {
             color: "var(--violet)"
           }}>
             <Sparkles size={16} />
-            <span style={{ fontSize: "14px", fontWeight: 500 }}>Powered by Claude AI</span>
+            <span style={{ fontSize: "14px", fontWeight: 500 }}>Resume + live job matching</span>
           </div>
 
           <h1 style={{
@@ -84,7 +55,7 @@ export default function LandingPage() {
             WebkitBackgroundClip: "text",
             WebkitTextFillColor: "transparent"
           }}>
-            Build ATS-Optimized<br />Resumes in Minutes
+            The job hunt,<br />with AI on your side
           </h1>
 
           <p style={{
@@ -93,13 +64,16 @@ export default function LandingPage() {
             maxWidth: "600px",
             margin: "0 auto 40px"
           }}>
-            Create professional, job-winning resumes with AI. Get real-time ATS scoring
-            and personalized suggestions to land your dream job.
+            Build an ATS-ready resume, then get matched to live roles from real company
+            career pages — with a score for every posting.
           </p>
 
-          <div style={{ display: "flex", gap: "16px", justifyContent: "center" }}>
+          <div style={{ display: "flex", gap: "16px", justifyContent: "center", flexWrap: "wrap" }}>
             <Link href="/sign-up" className="btn btn-primary" style={{ height: "52px", padding: "0 32px", fontSize: "16px" }}>
               Start Building Free <ArrowRight size={18} />
+            </Link>
+            <Link href="/jobs" className="btn" style={{ height: "52px", padding: "0 32px", fontSize: "16px" }}>
+              <Briefcase size={18} /> Browse live jobs
             </Link>
           </div>
         </div>
@@ -133,8 +107,8 @@ export default function LandingPage() {
               AI-Powered Writing
             </h3>
             <p style={{ color: "var(--accents-5)", lineHeight: 1.6 }}>
-              Claude AI transforms your raw input into polished, professional resume content
-              with impactful achievements.
+              AI turns your raw experience into polished bullets with measurable impact,
+              then tailors them to a specific posting.
             </p>
           </div>
 
@@ -187,8 +161,8 @@ export default function LandingPage() {
               Export Anywhere
             </h3>
             <p style={{ color: "var(--accents-5)", lineHeight: 1.6 }}>
-              Download your resume as PDF or DOCX. Professional formatting
-              ready for any application.
+                Download DOCX or PDF, then apply on the company site with a resume
+              already scored against that posting.
             </p>
           </div>
         </div>

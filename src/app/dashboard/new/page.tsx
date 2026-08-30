@@ -1,14 +1,29 @@
 "use client";
 
-import { useState, useRef, DragEvent } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useRef, useEffect, DragEvent, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { useUser } from "@clerk/nextjs";
-import { useMutation } from "convex/react";
+import { useMutation, useQuery } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
+import { Id } from "../../../../convex/_generated/dataModel";
 import { ArrowLeft, Sparkles, Upload, X, File, Loader2 } from "lucide-react";
 
 export default function NewResumePage() {
+    return (
+        <Suspense fallback={
+            <DashboardLayout>
+                <div className="page-container-narrow" style={{ display: "flex", justifyContent: "center", padding: 80 }}>
+                    <div className="loader" />
+                </div>
+            </DashboardLayout>
+        }>
+            <NewResumeForm />
+        </Suspense>
+    );
+}
+
+function NewResumeForm() {
     const [tab, setTab] = useState<"info" | "job">("info");
     const [rawInput, setRawInput] = useState("");
     const [jobDescription, setJobDescription] = useState("");
@@ -21,7 +36,20 @@ export default function NewResumePage() {
 
     const { user } = useUser();
     const router = useRouter();
+    const searchParams = useSearchParams();
+    const jobParam = searchParams.get("job");
     const createResume = useMutation(api.resumes.createResume);
+    const sourcedJob = useQuery(
+        api.jobs.getJob,
+        jobParam ? { id: jobParam as Id<"jobs"> } : "skip"
+    );
+
+    useEffect(() => {
+        if (sourcedJob?.descriptionText) {
+            setJobDescription(sourcedJob.descriptionText);
+            setTab("job");
+        }
+    }, [sourcedJob]);
 
     const handleFile = async (file: File) => {
         setIsParsing(true);
@@ -128,7 +156,9 @@ Tools: Git, Docker, AWS, Kubernetes`;
                     </button>
                     <h1 style={{ fontSize: "28px", fontWeight: 600, marginBottom: "8px" }}>Create New Resume</h1>
                     <p style={{ color: "var(--accents-5)", fontSize: "15px" }}>
-                        Upload your resume file or paste your information
+                        {sourcedJob
+                            ? `Tailoring for ${sourcedJob.title} at ${sourcedJob.company}`
+                            : "Upload your resume file or paste your information"}
                     </p>
                 </div>
 
