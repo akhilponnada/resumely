@@ -135,7 +135,7 @@ export default function ChatDetailPage({ params }: ChatPageProps) {
             <div style={{
                 display: "flex",
                 flexDirection: "column",
-                height: "calc(100vh - 64px)",
+                height: "calc(100svh - 64px)",
                 background: "#ffffff"
             }}>
                 {/* Messages Area */}

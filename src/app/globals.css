@@ -11,51 +11,51 @@
 }
 
 :root {
-  --geist-foreground: #000;
+  --geist-foreground: #171a1c;
   --geist-background: #fff;
-  --accents-1: #fafafa;
-  --accents-2: #eaeaea;
+  --accents-1: #eef1f0;
+  --accents-2: #dfe4e2;
   --accents-3: #999;
   --accents-4: #888;
-  --accents-5: #666;
+  --accents-5: #5a636c;
   --accents-6: #444;
   --accents-7: #333;
   --accents-8: #111;
   --violet: #7c3aed;
   --violet-light: #a78bfa;
   --violet-dark: #5b21b6;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
+  --background: oklch(0.975 0.004 160);
+  --foreground: oklch(0.175 0.012 250);
+  --card: oklch(0.995 0.002 160);
+  --card-foreground: oklch(0.175 0.012 250);
+  --popover: oklch(0.995 0.002 160);
+  --popover-foreground: oklch(0.175 0.012 250);
+  --primary: oklch(0.175 0.012 250);
+  --primary-foreground: oklch(0.985 0.002 160);
+  --secondary: oklch(0.95 0.006 160);
+  --secondary-foreground: oklch(0.175 0.012 250);
+  --muted: oklch(0.95 0.006 160);
+  --muted-foreground: oklch(0.48 0.012 250);
+  --accent: oklch(0.95 0.006 160);
+  --accent-foreground: oklch(0.175 0.012 250);
   --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
+  --border: oklch(0.90 0.008 160);
+  --input: oklch(0.90 0.008 160);
+  --ring: oklch(0.55 0.012 250);
   --chart-1: oklch(0.87 0 0);
   --chart-2: oklch(0.556 0 0);
   --chart-3: oklch(0.439 0 0);
   --chart-4: oklch(0.371 0 0);
   --chart-5: oklch(0.269 0 0);
   --radius: 0.625rem;
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  --sidebar: oklch(0.965 0.006 160);
+  --sidebar-foreground: oklch(0.175 0.012 250);
+  --sidebar-primary: oklch(0.175 0.012 250);
+  --sidebar-primary-foreground: oklch(0.985 0.002 160);
+  --sidebar-accent: oklch(0.95 0.006 160);
+  --sidebar-accent-foreground: oklch(0.175 0.012 250);
+  --sidebar-border: oklch(0.90 0.008 160);
+  --sidebar-ring: oklch(0.55 0.012 250);
 }
 
 html,
@@ -107,7 +107,7 @@ a {
 
 .main-content {
   margin-left: 260px;
-  min-height: 100vh;
+  min-height: 100svh;
 }
 
 .page-container {
@@ -133,9 +133,9 @@ a {
   align-items: center;
   gap: 8px;
   padding: 6px 12px;
-  background: rgba(124, 58, 237, 0.1);
+  background: var(--muted);
   border-radius: 100px;
-  color: var(--violet);
+  color: var(--foreground);
   font-size: 13px;
   font-weight: 500;
 }
@@ -170,7 +170,7 @@ a {
   width: 44px;
   height: 44px;
   border-radius: 10px;
-  background: rgba(124, 58, 237, 0.08);
+  background: var(--muted);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -470,8 +470,8 @@ a {
 
 .upload-zone:hover,
 .upload-zone.active {
-  border-color: var(--violet);
-  background: rgba(124, 58, 237, 0.04);
+  border-color: var(--geist-foreground);
+  background: var(--accents-1);
 }
 
 /* Resume Preview */
@@ -562,7 +562,7 @@ a {
 .chat-page {
   display: flex;
   flex-direction: column;
-  height: 100vh;
+  height: 100svh;
 }
 
 .chat-messages {
@@ -599,8 +599,8 @@ a {
 }
 
 .chat-avatar-ai {
-  background: rgba(124, 58, 237, 0.1);
-  color: var(--violet);
+  background: var(--muted);
+  color: var(--foreground);
 }
 
 .chat-content {
@@ -764,12 +764,19 @@ a {
   --chart-5: oklch(0.269 0 0);
   --sidebar: oklch(0.205 0 0);
   --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
+  --sidebar-primary: oklch(0.922 0 0);
   --sidebar-primary-foreground: oklch(0.985 0 0);
   --sidebar-accent: oklch(0.269 0 0);
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.556 0 0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .loader {
+    animation: none;
+    border-top-color: var(--foreground);
+  }
 }
 
 @layer base {

@@ -17,7 +17,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
 
     if (!isLoaded) {
         return (
-            <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <div className="flex min-h-svh items-center justify-center" aria-busy="true" aria-label="Loading dashboard">
                 <div className="loader" />
             </div>
         );
@@ -28,7 +28,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
     return (
         <div>
             <Sidebar />
-            <main className="main-content">{children}</main>
+            <main id="main" className="main-content">{children}</main>
         </div>
     );
 }

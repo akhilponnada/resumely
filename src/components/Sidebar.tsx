@@ -58,8 +58,8 @@ export function Sidebar() {
             {/* Logo */}
             <div style={{ padding: "20px", borderBottom: "1px solid var(--accents-2)" }}>
                 <Link href="/dashboard" style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
-                        <rect width="24" height="24" rx="6" fill="var(--violet)" />
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                        <rect width="24" height="24" rx="6" fill="var(--geist-foreground)" />
                         <path d="M7 8h10M7 12h10M7 16h6" stroke="white" strokeWidth="2" strokeLinecap="round" />
                     </svg>
                     <span style={{ fontSize: "17px", fontWeight: 600, letterSpacing: "-0.3px" }}>Resumely</span>
@@ -145,8 +145,8 @@ export function Sidebar() {
                                     padding: "8px 10px",
                                     borderRadius: "6px",
                                     fontSize: "13px",
-                                    color: "var(--violet)",
-                                    background: "rgba(124, 58, 237, 0.08)",
+                                    color: "var(--geist-foreground)",
+                                    background: "var(--geist-background)",
                                     marginBottom: "6px",
                                     transition: "all 0.15s ease",
                                 }}
@@ -187,6 +187,8 @@ export function Sidebar() {
                                                 {chat.title}
                                             </span>
                                             <button
+                                                type="button"
+                                                aria-label={`Delete ${chat.title}`}
                                                 onClick={(e) => handleDeleteChat(e, chat._id)}
                                                 style={{
                                                     background: "none",
@@ -201,7 +203,7 @@ export function Sidebar() {
                                                 onMouseEnter={(e) => e.currentTarget.style.opacity = "1"}
                                                 onMouseLeave={(e) => e.currentTarget.style.opacity = "0.6"}
                                             >
-                                                <Trash2 size={12} />
+                                                <Trash2 size={12} aria-hidden="true" />
                                             </button>
                                         </Link>
                                     );
@@ -220,6 +222,9 @@ export function Sidebar() {
             {/* User Menu */}
             <div style={{ padding: "12px", borderTop: "1px solid var(--accents-2)", position: "relative" }} ref={menuRef}>
                 <button
+                    type="button"
+                    aria-expanded={showUserMenu}
+                    aria-haspopup="menu"
                     onClick={() => setShowUserMenu(!showUserMenu)}
                     style={{
                         width: "100%",
@@ -238,11 +243,11 @@ export function Sidebar() {
                         width: "32px",
                         height: "32px",
                         borderRadius: "50%",
-                        background: "linear-gradient(135deg, var(--violet), var(--violet-light))",
+                        background: "var(--geist-foreground)",
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "center",
-                        color: "white",
+                        color: "var(--geist-background)",
                         fontSize: "13px",
                         fontWeight: 600,
                         flexShrink: 0,

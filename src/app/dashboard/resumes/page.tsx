@@ -42,10 +42,11 @@ export default function ResumesPage() {
                 <div style={{ position: "relative", marginBottom: "24px" }}>
                     <Search size={18} style={{ position: "absolute", left: "14px", top: "50%", transform: "translateY(-50%)", color: "var(--accents-4)" }} />
                     <input
-                        type="text"
+                        type="search"
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
-                        placeholder="Search resumes..."
+                        placeholder="Search resumes…"
+                        aria-label="Search resumes"
                         className="input"
                         style={{ paddingLeft: "44px" }}
                     />
@@ -77,18 +78,18 @@ export default function ResumesPage() {
                                         width: "44px",
                                         height: "44px",
                                         borderRadius: "10px",
-                                        background: "rgba(124, 58, 237, 0.08)",
+                                        background: "var(--accents-1)",
                                         display: "flex",
                                         alignItems: "center",
                                         justifyContent: "center"
                                     }}>
-                                        <FileText size={20} color="var(--violet)" />
+                                        <FileText size={20} color="var(--geist-foreground)" aria-hidden="true" />
                                     </div>
                                     <div>
                                         <div style={{ fontSize: "15px", fontWeight: 500, marginBottom: "2px" }}>{r.title}</div>
                                         <div style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "13px", color: "var(--accents-5)" }}>
                                             <Clock size={12} />
-                                            {new Date(r.createdAt).toLocaleDateString()}
+                                            {new Intl.DateTimeFormat(undefined, { dateStyle: "medium" }).format(new Date(r.createdAt))}
                                             {r.resumeData?.fullName && <span>• {r.resumeData.fullName}</span>}
                                         </div>
                                     </div>
@@ -112,8 +113,14 @@ export default function ResumesPage() {
                                         </div>
                                     ) : (
                                         <>
-                                            <button onClick={() => setDeleting(r._id)} className="btn btn-ghost" style={{ padding: "8px", height: "auto" }}>
-                                                <Trash2 size={16} />
+                                            <button
+                                                type="button"
+                                                aria-label={`Delete ${r.title}`}
+                                                onClick={() => setDeleting(r._id)}
+                                                className="btn btn-ghost"
+                                                style={{ padding: "8px", height: "auto" }}
+                                            >
+                                                <Trash2 size={16} aria-hidden="true" />
                                             </button>
                                             <ArrowRight size={16} color="var(--accents-3)" />
                                         </>

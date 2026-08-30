@@ -7,7 +7,7 @@ import { useUser } from "@clerk/nextjs";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
 import { Id } from "../../../../convex/_generated/dataModel";
-import { ArrowLeft, Sparkles, Upload, X, File, Loader2 } from "lucide-react";
+import { ArrowLeft, Upload, X, File, Loader2 } from "lucide-react";
 
 export default function NewResumePage() {
     return (
@@ -189,12 +189,12 @@ Tools: Git, Docker, AWS, Kubernetes`;
                             />
                             {isParsing ? (
                                 <div style={{ display: "flex", alignItems: "center", gap: "12px", justifyContent: "center" }}>
-                                    <Loader2 size={24} color="var(--violet)" style={{ animation: "spin 1s linear infinite" }} />
-                                    <span style={{ fontSize: "14px", color: "var(--accents-5)" }}>Parsing file...</span>
+                                    <Loader2 size={24} color="var(--geist-foreground)" style={{ animation: "spin 1s linear infinite" }} />
+                                    <span style={{ fontSize: "14px", color: "var(--accents-5)" }}>Parsing file…</span>
                                 </div>
                             ) : fileName ? (
                                 <div style={{ display: "flex", alignItems: "center", gap: "12px", justifyContent: "center" }}>
-                                    <File size={22} color="var(--violet)" />
+                                    <File size={22} color="var(--geist-foreground)" />
                                     <span style={{ fontSize: "14px" }}>{fileName}</span>
                                     <button
                                         onClick={(e) => {
@@ -212,7 +212,7 @@ Tools: Git, Docker, AWS, Kubernetes`;
                                 <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center" }}>
                                     <Upload size={28} color="var(--accents-4)" style={{ marginBottom: "12px" }} />
                                     <p style={{ fontSize: "14px", color: "var(--accents-5)" }}>
-                                        Drop your resume file or <span style={{ color: "var(--violet)", fontWeight: 500 }}>browse</span>
+                                        Drop your resume file or <span style={{ color: "var(--geist-foreground)", fontWeight: 500 }}>browse</span>
                                     </p>
                                     <p style={{ fontSize: "12px", color: "var(--accents-4)", marginTop: "4px" }}>
                                         Supports PDF, DOCX, TXT files
@@ -223,7 +223,7 @@ Tools: Git, Docker, AWS, Kubernetes`;
 
                         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
                             <label style={{ fontSize: "14px", fontWeight: 500 }}>Or paste your information</label>
-                            <button onClick={() => setRawInput(example)} style={{ fontSize: "13px", color: "var(--violet)", background: "none", border: "none", cursor: "pointer", fontWeight: 500 }}>
+                            <button type="button" onClick={() => setRawInput(example)} style={{ fontSize: "13px", color: "var(--geist-foreground)", background: "none", border: "none", cursor: "pointer", fontWeight: 500 }}>
                                 Load example
                             </button>
                         </div>
@@ -236,56 +236,41 @@ Tools: Git, Docker, AWS, Kubernetes`;
                         />
 
                         {/* Job Description Recommendation */}
-                        <div
+                        <button
+                            type="button"
                             onClick={() => setTab("job")}
                             style={{
                                 marginTop: "16px",
                                 padding: "14px 16px",
-                                background: "rgba(124, 58, 237, 0.06)",
+                                background: "var(--accents-1)",
                                 borderRadius: "10px",
-                                border: "1px dashed rgba(124, 58, 237, 0.3)",
+                                border: "1px dashed var(--accents-2)",
                                 cursor: "pointer",
-                                transition: "all 0.15s ease"
-                            }}
-                            onMouseEnter={(e) => {
-                                e.currentTarget.style.background = "rgba(124, 58, 237, 0.1)";
-                                e.currentTarget.style.borderColor = "rgba(124, 58, 237, 0.5)";
-                            }}
-                            onMouseLeave={(e) => {
-                                e.currentTarget.style.background = "rgba(124, 58, 237, 0.06)";
-                                e.currentTarget.style.borderColor = "rgba(124, 58, 237, 0.3)";
+                                width: "100%",
+                                textAlign: "left",
                             }}
                         >
-                            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                                <span style={{ fontSize: "16px" }}>💡</span>
-                                <p style={{ fontSize: "13px", color: "var(--accents-6)", margin: 0 }}>
-                                    <strong style={{ color: "var(--violet)" }}>Pro tip:</strong> Add a job description in the next tab to get a tailored resume with better ATS scores!
-                                </p>
-                            </div>
-                        </div>
+                            <p style={{ fontSize: "13px", color: "var(--accents-6)", margin: 0 }}>
+                                <strong>Next:</strong> Add a job description in the next tab to tailor bullets and raise the ATS score.
+                            </p>
+                        </button>
                     </div>
                 ) : (
                     <div>
                         {/* Recommendation Box */}
                         <div style={{
                             padding: "16px 20px",
-                            background: "linear-gradient(135deg, rgba(124, 58, 237, 0.08) 0%, rgba(167, 139, 250, 0.08) 100%)",
+                            background: "var(--accents-1)",
                             borderRadius: "12px",
                             marginBottom: "20px",
-                            border: "1px solid rgba(124, 58, 237, 0.2)"
+                            border: "1px solid var(--accents-2)"
                         }}>
-                            <div style={{ display: "flex", alignItems: "flex-start", gap: "12px" }}>
-                                <span style={{ fontSize: "20px" }}>💡</span>
-                                <div>
-                                    <p style={{ fontSize: "14px", fontWeight: 600, color: "var(--violet-dark)", marginBottom: "4px" }}>
-                                        Highly Recommended!
-                                    </p>
-                                    <p style={{ fontSize: "13px", color: "var(--accents-6)", lineHeight: 1.6 }}>
-                                        Paste the job description to get a <strong>tailored resume</strong> that matches the role&apos;s requirements.
-                                        This significantly improves your <strong>ATS score</strong> and interview chances!
-                                    </p>
-                                </div>
-                            </div>
+                            <p style={{ fontSize: "14px", fontWeight: 600, marginBottom: "4px" }}>
+                                Paste the posting
+                            </p>
+                            <p style={{ fontSize: "13px", color: "var(--accents-6)", lineHeight: 1.6 }}>
+                                The job description is used to tailor bullets and keywords to that role — it does not invent experience.
+                            </p>
                         </div>
 
                         <label style={{ display: "block", fontSize: "14px", fontWeight: 500, marginBottom: "8px" }}>
@@ -313,14 +298,14 @@ Tools: Git, Docker, AWS, Kubernetes`;
 
                 {/* Generate */}
                 <div style={{ marginTop: "28px", display: "flex", alignItems: "center", gap: "16px" }}>
-                    <button onClick={handleGenerate} disabled={isGenerating || !rawInput.trim()} className="btn btn-violet" style={{ height: "48px", padding: "0 28px", fontSize: "15px" }}>
+                    <button onClick={handleGenerate} disabled={isGenerating || !rawInput.trim()} className="btn btn-primary" style={{ height: "48px", padding: "0 28px", fontSize: "15px" }}>
                         {isGenerating ? (
-                            <><Loader2 size={18} style={{ animation: "spin 1s linear infinite" }} /> Generating...</>
+                            <><Loader2 size={18} style={{ animation: "spin 1s linear infinite" }} /> Generating…</>
                         ) : (
-                            <><Sparkles size={18} /> Generate Resume</>
+                            <>Generate resume</>
                         )}
                     </button>
-                    {isGenerating && <span style={{ fontSize: "14px", color: "var(--accents-5)" }}>This may take 15-30 seconds...</span>}
+                    {isGenerating && <span style={{ fontSize: "14px", color: "var(--accents-5)" }}>This may take 15–30 seconds…</span>}
                 </div>
             </div>
         </DashboardLayout>

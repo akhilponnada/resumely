@@ -30,10 +30,10 @@ export default function DashboardJobsPage() {
         <DashboardLayout>
             <div className="flex min-h-svh flex-col gap-5 px-6 py-6 md:px-8">
                 <header className="flex flex-col gap-1">
-                    <h1 className="font-heading text-3xl font-medium tracking-tight">
+                    <h1 className="font-heading text-3xl font-medium text-balance">
                         Welcome back, {firstName}
                     </h1>
-                    <p className="text-muted-foreground">
+                    <p className="text-pretty text-muted-foreground">
                         {latest
                             ? `Ranked against ${resumes?.[0]?.title ?? "your latest resume"}.`
                             : "Upload a resume to rank every live role against your skills."}

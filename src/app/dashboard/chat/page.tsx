@@ -241,8 +241,8 @@ export default function ChatPage() {
             <div style={{
                 display: "flex",
                 flexDirection: "column",
-                minHeight: "100vh",
-                background: "linear-gradient(180deg, #fdf2f8 0%, #fce7f3 50%, #fbcfe8 100%)"
+                minHeight: "100svh",
+                background: "var(--geist-background)"
             }}>
                 {/* Messages Area */}
                 <div style={{
@@ -292,7 +292,7 @@ export default function ChatPage() {
                                                 gap: "8px",
                                                 padding: "10px 20px",
                                                 background: "#ffffff",
-                                                border: "1px solid #f9a8d4",
+                                                border: "1px solid var(--accents-3)",
                                                 borderRadius: "24px",
                                                 fontSize: "14px",
                                                 fontWeight: 500,
@@ -304,14 +304,14 @@ export default function ChatPage() {
                                             }}
                                             onMouseEnter={(e) => {
                                                 if (!isLoading) {
-                                                    e.currentTarget.style.background = "#fdf2f8";
-                                                    e.currentTarget.style.borderColor = "#ec4899";
+                                                    e.currentTarget.style.background = "var(--accents-1)";
+                                                    e.currentTarget.style.borderColor = "var(--geist-foreground)";
                                                     e.currentTarget.style.transform = "translateY(-1px)";
                                                 }
                                             }}
                                             onMouseLeave={(e) => {
                                                 e.currentTarget.style.background = "#ffffff";
-                                                e.currentTarget.style.borderColor = "#f9a8d4";
+                                                e.currentTarget.style.borderColor = "var(--accents-3)";
                                                 e.currentTarget.style.transform = "translateY(0)";
                                             }}
                                         >
@@ -328,7 +328,7 @@ export default function ChatPage() {
                                     gap: "1px",
                                     width: "100%",
                                     maxWidth: "500px",
-                                    background: "#fce7f3",
+                                    background: "var(--accents-1)",
                                     borderRadius: "12px",
                                     overflow: "hidden"
                                 }}>
@@ -374,7 +374,7 @@ export default function ChatPage() {
                                         marginBottom: "8px"
                                     }}>
                                         <div style={{
-                                            background: "#ec4899",
+                                            background: "var(--geist-foreground)",
                                             color: "white",
                                             padding: "12px 18px",
                                             borderRadius: "20px 20px 4px 20px",
@@ -405,10 +405,10 @@ export default function ChatPage() {
                                                 alignItems: "center",
                                                 justifyContent: "center",
                                                 flexShrink: 0,
-                                                background: "#fdf2f8",
+                                                background: "var(--accents-1)",
                                                 borderRadius: "50%"
                                             }}>
-                                                <Sparkles size={16} color="#ec4899" />
+                                                <Sparkles size={16} color="var(--geist-foreground)" />
                                             </div>
                                             <div style={{ flex: 1 }}>
                                                 <div className="markdown-content" style={{
@@ -504,10 +504,10 @@ export default function ChatPage() {
                                         alignItems: "center",
                                         justifyContent: "center",
                                         flexShrink: 0,
-                                        background: "#fdf2f8",
+                                        background: "var(--accents-1)",
                                         borderRadius: "50%"
                                     }}>
-                                        <Sparkles size={16} color="#ec4899" />
+                                        <Sparkles size={16} color="var(--geist-foreground)" />
                                     </div>
                                     <div style={{ flex: 1 }}>
                                         {streamingContent ? (
@@ -528,7 +528,7 @@ export default function ChatPage() {
                                                 color: "#9d174d",
                                                 fontSize: "15px"
                                             }}>
-                                                <div className="loader" style={{ width: "14px", height: "14px", borderWidth: "2px", borderColor: "#f9a8d4", borderTopColor: "#ec4899" }} />
+                                                <div className="loader" style={{ width: "14px", height: "14px", borderWidth: "2px", borderColor: "var(--accents-3)", borderTopColor: "var(--geist-foreground)" }} />
                                                 <span>Thinking...</span>
                                             </div>
                                         )}
@@ -559,7 +559,7 @@ export default function ChatPage() {
                                 padding: "8px 12px",
                                 background: "rgba(253, 242, 248, 0.95)",
                                 borderRadius: "8px 8px 0 0",
-                                border: "1px solid #f9a8d4",
+                                border: "1px solid var(--accents-3)",
                                 borderBottom: "none"
                             }}>
                                 <FileText size={16} color="#9d174d" />
@@ -583,7 +583,7 @@ export default function ChatPage() {
                         <div style={{
                             background: "rgba(253, 242, 248, 0.95)",
                             borderRadius: uploadedFile ? "0 0 16px 16px" : "16px",
-                            border: "1px solid #f9a8d4",
+                            border: "1px solid var(--accents-3)",
                             overflow: "hidden",
                             boxShadow: "0 4px 12px rgba(157, 23, 77, 0.1)"
                         }}>
@@ -622,7 +622,7 @@ export default function ChatPage() {
                                 alignItems: "center",
                                 justifyContent: "space-between",
                                 padding: "10px 16px",
-                                background: "#fdf2f8"
+                                background: "var(--accents-1)"
                             }}>
                                 <div style={{
                                     display: "flex",
@@ -641,7 +641,7 @@ export default function ChatPage() {
                                         color: "#9d174d",
                                         fontWeight: 500
                                     }}>
-                                        <Sparkles size={14} color="#ec4899" />
+                                        <Sparkles size={14} color="var(--geist-foreground)" />
                                         <span>GPT-5 mini</span>
                                     </div>
 
@@ -669,6 +669,7 @@ export default function ChatPage() {
                                             opacity: isUploading || isLoading ? 0.5 : 1,
                                             transition: "all 0.15s ease"
                                         }}
+                                        aria-label="Upload resume"
                                         title="Upload resume (PDF, DOCX, TXT)"
                                     >
                                         {isUploading ? (
@@ -681,13 +682,15 @@ export default function ChatPage() {
 
                                 {/* Send Button */}
                                 <button
+                                    type="button"
+                                    aria-label="Send message"
                                     onClick={() => handleSubmit()}
                                     disabled={(!input.trim() && !uploadedFile) || isLoading}
                                     style={{
                                         width: "36px",
                                         height: "36px",
                                         borderRadius: "50%",
-                                        background: (input.trim() || uploadedFile) && !isLoading ? "#ec4899" : "#f9a8d4",
+                                        background: (input.trim() || uploadedFile) && !isLoading ? "var(--geist-foreground)" : "var(--accents-3)",
                                         border: "none",
                                         display: "flex",
                                         alignItems: "center",

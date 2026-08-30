@@ -42,3 +42,10 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Duplicate agent skill copies (canonical: .agents/skills + skills-lock.json)
+.claude/skills/
+.claude/worktrees/
+.grok/skills/
+.pi/
+.windsurf/
