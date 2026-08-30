@@ -1,38 +1,35 @@
 "use client";
 
-import { SiteHeader } from "@/components/SiteHeader";
-import { JobsBoard } from "@/components/JobsBoard";
-import { Sparkles } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@clerk/nextjs";
+import { JobsBoard } from "@/components/jobs/JobsBoard";
+import { Button } from "@/components/ui/button";
 
 export default function PublicJobsPage() {
     const { isSignedIn } = useAuth();
 
     return (
-        <div style={{ minHeight: "100vh", background: "var(--geist-background)" }}>
-            <SiteHeader />
-            <main className="page-container-wide">
-                <div style={{ marginBottom: 32, maxWidth: 720 }}>
-                    <div className="eyebrow">
-                        <Sparkles size={14} /> Live roles from company career pages
-                    </div>
-                    <h1 style={{ fontSize: 40, fontWeight: 700, letterSpacing: "-0.8px", margin: "10px 0 12px" }}>
+        <div className="flex min-h-0 flex-1 flex-col gap-5 px-4 py-5 md:px-6 md:py-6">
+            <header className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
+                <div className="flex flex-col gap-1">
+                    <h1 className="font-heading text-3xl font-medium tracking-tight md:text-4xl">
                         Stop searching. Get matched.
                     </h1>
-                    <p style={{ fontSize: 17, color: "var(--accents-5)", lineHeight: 1.6 }}>
-                        Real openings pulled from Greenhouse, Lever, Ashby and open remote feeds —
-                        scored against your Resumely resume so you apply where you actually fit.
+                    <p className="max-w-2xl text-sm text-muted-foreground md:text-base">
+                        Live roles from company career pages — Greenhouse, Lever, Ashby — ranked against your resume. Save, hide, tailor, apply.
                     </p>
-                    {!isSignedIn && (
-                        <p style={{ marginTop: 12, fontSize: 14, color: "var(--accents-4)" }}>
-                            <Link href="/sign-up" style={{ color: "var(--violet)", fontWeight: 500 }}>Create a free profile</Link>
-                            {" "}to see match scores and tailor a resume in one click.
-                        </p>
-                    )}
                 </div>
-                <JobsBoard basePath="/jobs" />
-            </main>
+                {!isSignedIn ? (
+                    <Button nativeButton={false} render={<Link href="/sign-up" />}>
+                        Get matched
+                    </Button>
+                ) : (
+                    <Button nativeButton={false} render={<Link href="/dashboard/jobs" />} variant="outline">
+                        Open your matches
+                    </Button>
+                )}
+            </header>
+            <JobsBoard basePath="/jobs" />
         </div>
     );
 }

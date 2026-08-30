@@ -78,6 +78,72 @@ export const getStats = query({
     },
 });
 
+type MarketJob = {
+    workplace: string;
+    source: string;
+    company: string;
+    companyLogo?: string;
+    applyUrl: string;
+    postedAt: number;
+    salary?: string;
+};
+
+function tallyMarket(jobs: MarketJob[]) {
+    const workplaceMap = new Map<string, number>();
+    const sourceMap = new Map<string, number>();
+    const companyMap = new Map<string, { count: number; logo?: string; applyUrl: string }>();
+    const week = Date.now() - 7 * 24 * 60 * 60 * 1000;
+    let postedLast7d = 0;
+    let withSalary = 0;
+    for (const j of jobs) {
+        workplaceMap.set(j.workplace, (workplaceMap.get(j.workplace) ?? 0) + 1);
+        sourceMap.set(j.source, (sourceMap.get(j.source) ?? 0) + 1);
+        const row = companyMap.get(j.company) ?? {
+            count: 0,
+            logo: j.companyLogo,
+            applyUrl: j.applyUrl,
+        };
+        row.count += 1;
+        if (!row.logo && j.companyLogo) row.logo = j.companyLogo;
+        companyMap.set(j.company, row);
+        if (j.postedAt >= week) postedLast7d += 1;
+        if (j.salary) withSalary += 1;
+    }
+    const toArr = (m: Map<string, number>) =>
+        [...m.entries()]
+            .map(([id, count]) => ({ id, count }))
+            .sort((a, b) => b.count - a.count);
+    return {
+        workplace: toArr(workplaceMap),
+        sources: toArr(sourceMap),
+        topCompanies: [...companyMap.entries()]
+            .sort((a, b) => b[1].count - a[1].count)
+            .slice(0, 8)
+            .map(([name, v]) => ({
+                name,
+                count: v.count,
+                logo: v.logo,
+                applyUrl: v.applyUrl,
+            })),
+        companyCount: companyMap.size,
+        postedLast7d,
+        withSalary,
+    };
+}
+
+export const getMarketPulse = query({
+    args: {},
+    handler: async (ctx) => {
+        const last = await ctx.db.query("crawlRuns").withIndex("by_startedAt").order("desc").first();
+        return {
+            activeJobs: last?.activeJobs ?? 0,
+            lastSyncAt: last?.finishedAt ?? last?.startedAt ?? 0,
+            status: last?.status ?? "idle",
+            market: last?.market ?? null,
+        };
+    },
+});
+
 export const listSaved = query({
     args: {},
     handler: async (ctx) => {
@@ -142,7 +208,12 @@ export const ensureCrawl = mutation({
         }
         if (last?.status === "ok" && last.finishedAt && Date.now() - last.finishedAt < sixHours) {
             const any = await ctx.db.query("jobs").withIndex("by_active_postedAt", (q) => q.eq("isActive", true)).first();
-            if (any) return { started: false, reason: "fresh" };
+            if (any) {
+                if (!last.market) {
+                    await ctx.scheduler.runAfter(0, internal.jobs.snapshotMarket, { runId: last._id });
+                }
+                return { started: false, reason: "fresh" };
+            }
         }
         await ctx.scheduler.runAfter(0, internal.jobSync.syncAll, {});
         return { started: true, reason: "scheduled" };
@@ -189,8 +260,27 @@ export const finishCrawl = internalMutation({
             upserted: args.upserted,
             activeJobs: sample.length + (sample.length === 2000 ? 1 : 0),
             error: args.error,
+            market: args.status === "ok" ? tallyMarket(sample) : undefined,
         });
         return { deactivated };
+    },
+});
+
+export const snapshotMarket = internalMutation({
+    args: { runId: v.optional(v.id("crawlRuns")) },
+    handler: async (ctx, args) => {
+        const run = args.runId
+            ? await ctx.db.get(args.runId)
+            : await ctx.db.query("crawlRuns").withIndex("by_startedAt").order("desc").first();
+        if (!run) return;
+        const jobs = await ctx.db
+            .query("jobs")
+            .withIndex("by_active_postedAt", (q) => q.eq("isActive", true))
+            .take(2500);
+        await ctx.db.patch(run._id, {
+            market: tallyMarket(jobs),
+            activeJobs: jobs.length,
+        });
     },
 });
 

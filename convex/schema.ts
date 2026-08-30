@@ -152,5 +152,18 @@ export default defineSchema({
     upserted: v.optional(v.number()),
     activeJobs: v.optional(v.number()),
     error: v.optional(v.string()),
+    market: v.optional(v.object({
+      workplace: v.array(v.object({ id: v.string(), count: v.number() })),
+      sources: v.array(v.object({ id: v.string(), count: v.number() })),
+      topCompanies: v.array(v.object({
+        name: v.string(),
+        count: v.number(),
+        logo: v.optional(v.string()),
+        applyUrl: v.string(),
+      })),
+      companyCount: v.number(),
+      postedLast7d: v.number(),
+      withSalary: v.number(),
+    })),
   }).index("by_startedAt", ["startedAt"]),
 });

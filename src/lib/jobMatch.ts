@@ -8,10 +8,17 @@ export interface JobMatchInput {
     location: string;
 }
 
+export interface MatchBreakdown {
+    id: string;
+    label: string;
+    value: number;
+}
+
 export interface JobMatch {
     score: number;
     matched: string[];
     missing: string[];
+    breakdown: MatchBreakdown[];
 }
 
 const STOPWORDS = new Set([
@@ -82,18 +89,57 @@ export function matchJob(resume: ResumeData, job: JobMatchInput): JobMatch {
     }
 
     const titleHit = skills.some((s) => job.title.toLowerCase().includes(s)) ? 8 : 0;
-    const tagHit = job.tags.filter((t) =>
+    const tagHits = job.tags.filter((t) =>
         resumeSet.has(t.toLowerCase()) || skills.some((s) => s.includes(t.toLowerCase()))
-    ).length * 3;
+    ).length;
     const denom = Math.max(pool.length, 1);
+    const keywordPct = Math.round((matched.length / denom) * 100);
+    const skillPct = skills.length === 0
+        ? 0
+        : Math.round((skills.filter((s) =>
+            job.title.toLowerCase().includes(s)
+            || job.tags.some((t) => t.toLowerCase().includes(s))
+            || job.descriptionText.toLowerCase().includes(s)
+        ).length / skills.length) * 100);
+    const titlePct = titleHit ? 92 : (job.title.split(/\s+/).some((w) => resumeSet.has(w.toLowerCase())) ? 54 : 22);
     const overlap = Math.round((matched.length / denom) * 85);
-    const score = Math.max(12, Math.min(99, overlap + titleHit + Math.min(tagHit, 10)));
+    const score = Math.max(12, Math.min(99, overlap + titleHit + Math.min(tagHits * 3, 10)));
 
     return {
         score,
         matched: matched.slice(0, 12),
         missing: missing.slice(0, 12),
+        breakdown: [
+            { id: "keywords", label: "Keyword coverage", value: keywordPct },
+            { id: "skills", label: "Skill overlap", value: skillPct },
+            { id: "title", label: "Title fit", value: titlePct },
+        ],
     };
+}
+
+export function countSkills(data: ResumeData | undefined): number {
+    if (!data?.skills) return 0;
+    return Object.values(data.skills)
+        .flatMap((v) => (Array.isArray(v) ? v : []))
+        .filter(Boolean).length;
+}
+
+export function matchSummary(match: JobMatch): string {
+    const hits = match.matched.slice(0, 3).join(", ");
+    const gaps = match.missing.slice(0, 3).join(", ");
+    if (match.score >= 80) {
+        return hits
+            ? `Strong fit — your resume already covers ${hits}.`
+            : "Strong fit against this posting.";
+    }
+    if (match.score >= 55) {
+        return gaps
+            ? `Solid overlap. Tailor toward ${gaps} before you apply.`
+            : "Solid overlap with this posting.";
+    }
+    return gaps
+        ? `Stretch role. Cover ${gaps} in a tailored resume.`
+        : "Stretch role — tailor your resume to this posting first.";
 }
 
 export function relativeTime(ts: number): string {

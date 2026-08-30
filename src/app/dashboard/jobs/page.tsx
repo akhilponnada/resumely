@@ -1,79 +1,121 @@
 "use client";
 
-import { useState } from "react";
-import { DashboardLayout } from "@/components/DashboardLayout";
-import { JobsBoard } from "@/components/JobsBoard";
-import { JobCard } from "@/components/JobCard";
-import { useQuery, useMutation } from "convex/react";
+import { useMemo, useState } from "react";
+import Link from "next/link";
+import { useQuery } from "convex/react";
 import { useUser } from "@clerk/nextjs";
+import { BookmarkIcon } from "lucide-react";
 import { api } from "../../../../convex/_generated/api";
-import { Id } from "../../../../convex/_generated/dataModel";
-import { matchJob } from "@/lib/jobMatch";
-import { ResumeData } from "@/lib/types";
-import { Bookmark } from "lucide-react";
+import { DashboardLayout } from "@/components/DashboardLayout";
+import { JobsBoard } from "@/components/jobs/JobsBoard";
+import { StatCard } from "@/components/jobs/MarketPulse";
+import { QuietErrorBoundary } from "@/components/jobs/QuietErrorBoundary";
+import { countSkills } from "@/lib/jobMatch";
+import type { ResumeData } from "@/lib/types";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 
 export default function DashboardJobsPage() {
-    const [tab, setTab] = useState<"all" | "saved">("all");
+    const [tab, setTab] = useState("all");
     const { user } = useUser();
     const saved = useQuery(api.jobs.listSaved, user?.id ? {} : "skip");
     const resumes = useQuery(api.resumes.getResumesByUser, user?.id ? {} : "skip");
-    const toggleSave = useMutation(api.jobs.toggleSave);
     const latest = resumes?.[0]?.resumeData as ResumeData | undefined;
+
+    const skills = useMemo(() => countSkills(latest), [latest]);
+    const firstName = user?.firstName ?? "there";
 
     return (
         <DashboardLayout>
-            <div className="page-container-wide">
-                <div style={{ marginBottom: 24 }}>
-                    <h1 style={{ fontSize: 28, fontWeight: 600, marginBottom: 4 }}>Job matches</h1>
-                    <p style={{ color: "var(--accents-5)", fontSize: 15 }}>
-                        Live roles from company career pages, ranked against your latest resume.
+            <div className="flex min-h-svh flex-col gap-5 px-6 py-6 md:px-8">
+                <header className="flex flex-col gap-1">
+                    <h1 className="font-heading text-3xl font-medium tracking-tight">
+                        Welcome back, {firstName}
+                    </h1>
+                    <p className="text-muted-foreground">
+                        {latest
+                            ? `Ranked against ${resumes?.[0]?.title ?? "your latest resume"}.`
+                            : "Upload a resume to rank every live role against your skills."}
                     </p>
-                </div>
+                    {!latest ? (
+                        <div className="pt-1">
+                            <Button nativeButton={false} render={<Link href="/dashboard/new" />} size="sm">
+                                Create a resume
+                            </Button>
+                        </div>
+                    ) : null}
+                </header>
 
-                <div className="tabs">
-                    <button className={`tab ${tab === "all" ? "active" : ""}`} onClick={() => setTab("all")}>
-                        For you
-                    </button>
-                    <button className={`tab ${tab === "saved" ? "active" : ""}`} onClick={() => setTab("saved")}>
-                        <Bookmark size={14} /> Saved {saved ? `(${saved.length})` : ""}
-                    </button>
-                </div>
+                <QuietErrorBoundary>
+                    <DashboardStats
+                        savedCount={saved?.length}
+                        skillCount={skills}
+                        resumeCount={resumes?.length}
+                    />
+                </QuietErrorBoundary>
 
-                {tab === "all" ? (
-                    <JobsBoard basePath="/dashboard/jobs" />
-                ) : !saved ? (
-                    <div style={{ display: "flex", justifyContent: "center", padding: 48 }}><div className="loader" /></div>
-                ) : saved.length === 0 ? (
-                    <div className="card" style={{ textAlign: "center", padding: 48, color: "var(--accents-5)" }}>
-                        Save roles you want to come back to. They stay here even after the listing ages out of the homepage.
-                    </div>
-                ) : (
-                    <div className="jobs-grid">
-                        {saved.map(({ job }) => {
-                            if (!job) return null;
-                            const match = latest
-                                ? matchJob(latest, {
-                                    title: job.title,
-                                    company: job.company,
-                                    descriptionText: job.descriptionText,
-                                    tags: job.tags,
-                                    location: job.location,
-                                }).score
-                                : undefined;
-                            return (
-                                <JobCard
-                                    key={job._id}
-                                    job={job}
-                                    href={`/dashboard/jobs/${job._id}`}
-                                    match={match}
-                                    saved
-                                    onToggleSave={() => toggleSave({ jobId: job._id as Id<"jobs"> })}
-                                />
-                            );
-                        })}
-                    </div>
-                )}
+                <Tabs
+                    value={tab}
+                    onValueChange={(value) => {
+                        if (value) setTab(value);
+                    }}
+                    className="flex min-h-0 flex-1 flex-col"
+                >
+                    <TabsList>
+                        <TabsTrigger value="all">Top matches</TabsTrigger>
+                        <TabsTrigger value="saved">
+                            <BookmarkIcon data-icon="inline-start" />
+                            Saved
+                            {saved ? <Badge variant="secondary">{saved.length}</Badge> : null}
+                        </TabsTrigger>
+                    </TabsList>
+                    <TabsContent value="all" className="flex min-h-0 flex-1 flex-col pt-4">
+                        <JobsBoard basePath="/dashboard/jobs" showPulse={false} />
+                    </TabsContent>
+                    <TabsContent value="saved" className="flex min-h-0 flex-1 flex-col pt-4">
+                        <JobsBoard basePath="/dashboard/jobs" savedOnly showPulse={false} />
+                    </TabsContent>
+                </Tabs>
             </div>
         </DashboardLayout>
+    );
+}
+
+function DashboardStats({
+    savedCount,
+    skillCount,
+    resumeCount,
+}: {
+    savedCount?: number;
+    skillCount: number;
+    resumeCount?: number;
+}) {
+    const pulse = useQuery(api.jobs.getMarketPulse);
+    const live = pulse?.activeJobs;
+
+    return (
+        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+            <StatCard
+                label="Live roles"
+                value={live == null ? "—" : live >= 2000 ? "2,000+" : live.toLocaleString()}
+                hint="Company career pages"
+            />
+            <StatCard
+                label="Saved"
+                value={savedCount == null ? "—" : savedCount.toLocaleString()}
+                hint="Roles you pinned"
+            />
+            <StatCard
+                label="Skills"
+                value={skillCount.toLocaleString()}
+                hint="From your latest resume"
+            />
+            <StatCard
+                label="Resumes"
+                value={resumeCount == null ? "—" : resumeCount.toLocaleString()}
+                hint="Ready to tailor"
+            />
+        </div>
     );
 }
