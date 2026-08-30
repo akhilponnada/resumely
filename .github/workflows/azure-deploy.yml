@@ -10,6 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+      id-token: write
     steps:
       - uses: actions/checkout@v4
 
@@ -44,10 +45,20 @@ jobs:
           mkdir -p /tmp/resumely-release/.next
           cp -R .next/static /tmp/resumely-release/.next/static
           cp -R public /tmp/resumely-release/public
+          cd /tmp/resumely-release && zip -qr /tmp/resumely-release.zip .
+
+      - name: Azure login (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
       - name: Deploy to Azure App Service
-        uses: azure/webapps-deploy@v3
-        with:
-          app-name: resumely-app
-          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
-          package: /tmp/resumely-release
+        run: |
+          az webapp deploy \
+            --resource-group rg-resumely \
+            --name resumely-app \
+            --src-path /tmp/resumely-release.zip \
+            --type zip \
+            --async false
