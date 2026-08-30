@@ -1,23 +1,38 @@
 "use client";
 
-import { useState, useRef, useEffect, DragEvent, Suspense } from "react";
+import { DragEvent, Suspense, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { DashboardLayout } from "@/components/DashboardLayout";
 import { useUser } from "@clerk/nextjs";
 import { useMutation, useQuery } from "convex/react";
+import { ArrowLeftIcon, FileIcon, UploadIcon, XIcon } from "lucide-react";
+import { toast } from "sonner";
 import { api } from "../../../../convex/_generated/api";
 import { Id } from "../../../../convex/_generated/dataModel";
-import { ArrowLeft, Upload, X, File, Loader2 } from "lucide-react";
+import { PageBody } from "@/components/page-body";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import {
+    Card,
+    CardContent,
+    CardDescription,
+    CardHeader,
+    CardTitle,
+} from "@/components/ui/card";
+import { Field, FieldDescription, FieldGroup, FieldLabel } from "@/components/ui/field";
+import { Spinner } from "@/components/ui/spinner";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Textarea } from "@/components/ui/textarea";
+import { cn } from "@/lib/utils";
 
 export default function NewResumePage() {
     return (
-        <Suspense fallback={
-            <DashboardLayout>
-                <div className="page-container-narrow" style={{ display: "flex", justifyContent: "center", padding: 80 }}>
-                    <div className="loader" />
-                </div>
-            </DashboardLayout>
-        }>
+        <Suspense
+            fallback={
+                <PageBody size="narrow" className="flex justify-center py-20">
+                    <Spinner />
+                </PageBody>
+            }
+        >
             <NewResumeForm />
         </Suspense>
     );
@@ -41,7 +56,7 @@ function NewResumeForm() {
     const createResume = useMutation(api.resumes.createResume);
     const sourcedJob = useQuery(
         api.jobs.getJob,
-        jobParam ? { id: jobParam as Id<"jobs"> } : "skip"
+        jobParam ? { id: jobParam as Id<"jobs"> } : "skip",
     );
 
     useEffect(() => {
@@ -79,15 +94,19 @@ function NewResumeForm() {
         }
     };
 
-    const handleDrop = (e: DragEvent) => {
-        e.preventDefault();
+    const handleDrop = (event: DragEvent) => {
+        event.preventDefault();
         setDragging(false);
-        if (e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);
+        if (event.dataTransfer.files[0]) handleFile(event.dataTransfer.files[0]);
     };
 
     const handleGenerate = async () => {
         if (!rawInput.trim()) {
             setError("Please enter your resume information");
+            return;
+        }
+        if (!user?.id) {
+            setError("Sign in to generate a resume");
             return;
         }
         setIsGenerating(true);
@@ -97,7 +116,10 @@ function NewResumeForm() {
             const res = await fetch("/api/generate-resume", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ rawInput, jobDescription: jobDescription.trim() || undefined }),
+                body: JSON.stringify({
+                    rawInput,
+                    jobDescription: jobDescription.trim() || undefined,
+                }),
             });
             if (!res.ok) throw new Error("Failed to generate");
 
@@ -117,7 +139,9 @@ function NewResumeForm() {
             });
             router.push(`/resume/${id}`);
         } catch (err) {
-            setError(err instanceof Error ? err.message : "Failed to generate");
+            const message = err instanceof Error ? err.message : "Failed to generate";
+            setError(message);
+            toast.error(message);
         } finally {
             setIsGenerating(false);
         }
@@ -147,167 +171,183 @@ Frameworks: React, Node.js, Flask, Django
 Tools: Git, Docker, AWS, Kubernetes`;
 
     return (
-        <DashboardLayout>
-            <div className="page-container-narrow">
-                {/* Header */}
-                <div style={{ marginBottom: "32px" }}>
-                    <button onClick={() => router.back()} className="btn btn-ghost" style={{ marginBottom: "20px", padding: "8px 12px", height: "auto" }}>
-                        <ArrowLeft size={16} /> Back
-                    </button>
-                    <h1 style={{ fontSize: "28px", fontWeight: 600, marginBottom: "8px" }}>Create New Resume</h1>
-                    <p style={{ color: "var(--accents-5)", fontSize: "15px" }}>
-                        {sourcedJob
-                            ? `Tailoring for ${sourcedJob.title} at ${sourcedJob.company}`
-                            : "Upload your resume file or paste your information"}
-                    </p>
-                </div>
+        <PageBody size="narrow">
+            <Button variant="ghost" className="mb-5" onClick={() => router.back()}>
+                <ArrowLeftIcon data-icon="inline-start" />
+                Back
+            </Button>
+            <header className="mb-8">
+                <h1 className="font-heading text-3xl font-medium text-balance">
+                    Create resume
+                </h1>
+                <p className="mt-1 text-pretty text-muted-foreground">
+                    {sourcedJob
+                        ? `Tailoring for ${sourcedJob.title} at ${sourcedJob.company}`
+                        : "Upload a file or paste what you already have."}
+                </p>
+            </header>
 
-                {/* Tabs */}
-                <div className="tabs">
-                    <button className={`tab ${tab === "info" ? "active" : ""}`} onClick={() => setTab("info")}>Your Information</button>
-                    <button className={`tab ${tab === "job" ? "active" : ""}`} onClick={() => setTab("job")}>Job Description</button>
-                </div>
+            <Tabs
+                value={tab}
+                onValueChange={(value) => {
+                    if (value === "info" || value === "job") setTab(value);
+                }}
+            >
+                <TabsList variant="line">
+                    <TabsTrigger value="info">Your information</TabsTrigger>
+                    <TabsTrigger value="job">Job description</TabsTrigger>
+                </TabsList>
 
-                {/* Content */}
-                {tab === "info" ? (
-                    <div>
-                        {/* Upload */}
-                        <div
-                            className={`upload-zone ${dragging ? "active" : ""}`}
+                <TabsContent value="info" className="pt-6">
+                    <FieldGroup>
+                        <button
+                            type="button"
+                            data-dragging={dragging}
+                            disabled={isParsing}
                             onDrop={handleDrop}
-                            onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
+                            onDragOver={(event) => {
+                                event.preventDefault();
+                                setDragging(true);
+                            }}
                             onDragLeave={() => setDragging(false)}
                             onClick={() => !isParsing && fileRef.current?.click()}
-                            style={{ marginBottom: "20px", cursor: isParsing ? "wait" : "pointer" }}
+                            className={cn(
+                                "flex w-full flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-input px-6 py-10 text-center transition-colors hover:bg-muted disabled:pointer-events-none",
+                                dragging && "border-foreground bg-muted",
+                            )}
                         >
                             <input
                                 ref={fileRef}
                                 type="file"
                                 accept=".pdf,.docx,.doc,.txt,.md"
                                 hidden
-                                onChange={(e) => e.target.files?.[0] && handleFile(e.target.files[0])}
+                                onChange={(event) =>
+                                    event.target.files?.[0] && handleFile(event.target.files[0])
+                                }
                             />
                             {isParsing ? (
-                                <div style={{ display: "flex", alignItems: "center", gap: "12px", justifyContent: "center" }}>
-                                    <Loader2 size={24} color="var(--geist-foreground)" style={{ animation: "spin 1s linear infinite" }} />
-                                    <span style={{ fontSize: "14px", color: "var(--accents-5)" }}>Parsing file…</span>
-                                </div>
+                                <span className="flex items-center gap-2 text-sm text-muted-foreground">
+                                    <Spinner />
+                                    Parsing file…
+                                </span>
                             ) : fileName ? (
-                                <div style={{ display: "flex", alignItems: "center", gap: "12px", justifyContent: "center" }}>
-                                    <File size={22} color="var(--geist-foreground)" />
-                                    <span style={{ fontSize: "14px" }}>{fileName}</span>
-                                    <button
-                                        onClick={(e) => {
-                                            e.stopPropagation();
+                                <span className="flex items-center gap-2 text-sm">
+                                    <FileIcon />
+                                    {fileName}
+                                    <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="icon-sm"
+                                        aria-label="Remove file"
+                                        onClick={(event) => {
+                                            event.stopPropagation();
                                             setFileName(null);
                                             setRawInput("");
                                         }}
-                                        className="btn btn-ghost"
-                                        style={{ padding: "6px", height: "auto" }}
                                     >
-                                        <X size={16} />
-                                    </button>
-                                </div>
+                                        <XIcon />
+                                    </Button>
+                                </span>
                             ) : (
-                                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center" }}>
-                                    <Upload size={28} color="var(--accents-4)" style={{ marginBottom: "12px" }} />
-                                    <p style={{ fontSize: "14px", color: "var(--accents-5)" }}>
-                                        Drop your resume file or <span style={{ color: "var(--geist-foreground)", fontWeight: 500 }}>browse</span>
+                                <>
+                                    <UploadIcon className="text-muted-foreground" />
+                                    <p className="text-sm text-muted-foreground">
+                                        Drop your resume or{" "}
+                                        <span className="font-medium text-foreground">browse</span>
                                     </p>
-                                    <p style={{ fontSize: "12px", color: "var(--accents-4)", marginTop: "4px" }}>
-                                        Supports PDF, DOCX, TXT files
+                                    <p className="text-xs text-muted-foreground">
+                                        PDF, DOCX, or TXT
                                     </p>
-                                </div>
+                                </>
                             )}
-                        </div>
+                        </button>
 
-                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
-                            <label style={{ fontSize: "14px", fontWeight: 500 }}>Or paste your information</label>
-                            <button type="button" onClick={() => setRawInput(example)} style={{ fontSize: "13px", color: "var(--geist-foreground)", background: "none", border: "none", cursor: "pointer", fontWeight: 500 }}>
-                                Load example
-                            </button>
-                        </div>
-                        <textarea
-                            value={rawInput}
-                            onChange={(e) => setRawInput(e.target.value)}
-                            placeholder="Paste your name, contact info, education, experience, projects, skills, certifications, or any other information about yourself..."
-                            className="textarea"
-                            style={{ minHeight: "280px" }}
-                        />
+                        <Field>
+                            <div className="flex items-center justify-between gap-3">
+                                <FieldLabel htmlFor="resume-info">
+                                    Or paste your information
+                                </FieldLabel>
+                                <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => setRawInput(example)}
+                                >
+                                    Load example
+                                </Button>
+                            </div>
+                            <Textarea
+                                id="resume-info"
+                                value={rawInput}
+                                onChange={(event) => setRawInput(event.target.value)}
+                                placeholder="Paste your name, contact info, education, experience, projects, and skills…"
+                                className="min-h-64"
+                            />
+                        </Field>
 
-                        {/* Job Description Recommendation */}
                         <button
                             type="button"
                             onClick={() => setTab("job")}
-                            style={{
-                                marginTop: "16px",
-                                padding: "14px 16px",
-                                background: "var(--accents-1)",
-                                borderRadius: "10px",
-                                border: "1px dashed var(--accents-2)",
-                                cursor: "pointer",
-                                width: "100%",
-                                textAlign: "left",
-                            }}
+                            className="rounded-xl border border-dashed border-input px-4 py-3 text-left text-sm text-muted-foreground hover:bg-muted"
                         >
-                            <p style={{ fontSize: "13px", color: "var(--accents-6)", margin: 0 }}>
-                                <strong>Next:</strong> Add a job description in the next tab to tailor bullets and raise the ATS score.
-                            </p>
+                            <strong className="text-foreground">Next:</strong> Add a job
+                            description to tailor bullets and raise the ATS score.
                         </button>
-                    </div>
-                ) : (
-                    <div>
-                        {/* Recommendation Box */}
-                        <div style={{
-                            padding: "16px 20px",
-                            background: "var(--accents-1)",
-                            borderRadius: "12px",
-                            marginBottom: "20px",
-                            border: "1px solid var(--accents-2)"
-                        }}>
-                            <p style={{ fontSize: "14px", fontWeight: 600, marginBottom: "4px" }}>
-                                Paste the posting
-                            </p>
-                            <p style={{ fontSize: "13px", color: "var(--accents-6)", lineHeight: 1.6 }}>
-                                The job description is used to tailor bullets and keywords to that role — it does not invent experience.
-                            </p>
-                        </div>
+                    </FieldGroup>
+                </TabsContent>
 
-                        <label style={{ display: "block", fontSize: "14px", fontWeight: 500, marginBottom: "8px" }}>
-                            Target Job Description
-                        </label>
-                        <textarea
-                            value={jobDescription}
-                            onChange={(e) => setJobDescription(e.target.value)}
-                            placeholder="Paste the job description here to optimize your resume for ATS and tailor it to the role..."
-                            className="textarea"
-                            style={{ minHeight: "280px" }}
-                        />
-                        <p style={{ fontSize: "13px", color: "var(--accents-4)", marginTop: "12px" }}>
-                            We&apos;ll extract key skills and requirements to customize your resume
-                        </p>
-                    </div>
-                )}
+                <TabsContent value="job" className="pt-6">
+                    <FieldGroup>
+                        <Card size="sm">
+                            <CardHeader>
+                                <CardTitle>Paste the posting</CardTitle>
+                                <CardDescription>
+                                    Used to tailor bullets and keywords — it does not invent
+                                    experience.
+                                </CardDescription>
+                            </CardHeader>
+                        </Card>
+                        <Field>
+                            <FieldLabel htmlFor="job-description">
+                                Target job description
+                            </FieldLabel>
+                            <Textarea
+                                id="job-description"
+                                value={jobDescription}
+                                onChange={(event) => setJobDescription(event.target.value)}
+                                placeholder="Paste the job description to tailor keywords and bullets…"
+                                className="min-h-64"
+                            />
+                            <FieldDescription>
+                                We extract skills and requirements to customize this resume.
+                            </FieldDescription>
+                        </Field>
+                    </FieldGroup>
+                </TabsContent>
+            </Tabs>
 
-                {/* Error */}
-                {error && (
-                    <div style={{ marginTop: "20px", padding: "14px 16px", background: "#ffe3e3", color: "#c92a2a", borderRadius: "8px", fontSize: "14px" }}>
-                        {error}
-                    </div>
-                )}
+            {error ? (
+                <Alert variant="destructive" className="mt-6">
+                    <AlertTitle>Could not generate</AlertTitle>
+                    <AlertDescription>{error}</AlertDescription>
+                </Alert>
+            ) : null}
 
-                {/* Generate */}
-                <div style={{ marginTop: "28px", display: "flex", alignItems: "center", gap: "16px" }}>
-                    <button onClick={handleGenerate} disabled={isGenerating || !rawInput.trim()} className="btn btn-primary" style={{ height: "48px", padding: "0 28px", fontSize: "15px" }}>
-                        {isGenerating ? (
-                            <><Loader2 size={18} style={{ animation: "spin 1s linear infinite" }} /> Generating…</>
-                        ) : (
-                            <>Generate resume</>
-                        )}
-                    </button>
-                    {isGenerating && <span style={{ fontSize: "14px", color: "var(--accents-5)" }}>This may take 15–30 seconds…</span>}
-                </div>
+            <div className="mt-8 flex flex-wrap items-center gap-3">
+                <Button
+                    onClick={handleGenerate}
+                    disabled={isGenerating || !rawInput.trim()}
+                    size="lg"
+                >
+                    {isGenerating ? <Spinner data-icon="inline-start" /> : null}
+                    {isGenerating ? "Generating…" : "Generate resume"}
+                </Button>
+                {isGenerating ? (
+                    <p className="text-sm text-muted-foreground">
+                        This may take 15–30 seconds…
+                    </p>
+                ) : null}
             </div>
-        </DashboardLayout>
+        </PageBody>
     );
 }

@@ -40,7 +40,7 @@ Headlines use `{typography.heading.fontFamily}` at medium weight. Body and contr
 
 ## Layout
 
-Public pages share a sticky header, `min-h-svh` shell, and a skip link to `#main`. The landing hero is a split: offer on the left, example ranked shortlist on the right. Jobs stay a ranked list, not a search-first card grid. Dashboard resume-builder classes `.btn`, `.sidebar`, and `.card` remain the layout contract for the editor.
+Public pages share a sticky header, `min-h-svh` shell, and a skip link to `#main`. The landing hero is a split: offer on the left, example ranked shortlist on the right. Jobs stay a ranked list, not a search-first card grid. Signed-in chrome is shadcn Sidebar + Inset. Chat is assistant-ui Thread. Resume preview (Times New Roman paper) is a document artifact, not app chrome.
 
 ## Shapes
 

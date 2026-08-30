@@ -2,11 +2,11 @@ import type { Metadata } from "next";
 import { AppShell } from "@/components/app-shell";
 
 export const metadata: Metadata = {
-    title: "Dashboard",
+    title: "Resume",
     robots: { index: false, follow: false },
 };
 
-export default function DashboardSegmentLayout({
+export default function ResumeLayout({
     children,
 }: {
     children: React.ReactNode;

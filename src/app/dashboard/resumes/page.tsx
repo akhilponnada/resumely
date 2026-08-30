@@ -1,13 +1,47 @@
 "use client";
 
 import { useState } from "react";
-import { DashboardLayout } from "@/components/DashboardLayout";
-import { useUser } from "@clerk/nextjs";
-import { useQuery, useMutation } from "convex/react";
-import { api } from "../../../../convex/_generated/api";
 import Link from "next/link";
-import { FileText, Clock, Search, Trash2, Plus, ArrowRight } from "lucide-react";
+import { useUser } from "@clerk/nextjs";
+import { useMutation, useQuery } from "convex/react";
+import { ClockIcon, FileTextIcon, PlusIcon, SearchIcon, Trash2Icon } from "lucide-react";
+import { api } from "../../../../convex/_generated/api";
 import { Id } from "../../../../convex/_generated/dataModel";
+import { PageBody } from "@/components/page-body";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+    Card,
+    CardDescription,
+    CardHeader,
+    CardTitle,
+} from "@/components/ui/card";
+import {
+    Empty,
+    EmptyContent,
+    EmptyDescription,
+    EmptyHeader,
+    EmptyMedia,
+    EmptyTitle,
+} from "@/components/ui/empty";
+import {
+    InputGroup,
+    InputGroupAddon,
+    InputGroupInput,
+} from "@/components/ui/input-group";
+import { Spinner } from "@/components/ui/spinner";
+
+function formatDate(value: number) {
+    return new Intl.DateTimeFormat(undefined, { dateStyle: "medium" }).format(
+        new Date(value),
+    );
+}
+
+function atsVariant(score: number) {
+    if (score >= 80) return "default" as const;
+    if (score >= 60) return "secondary" as const;
+    return "destructive" as const;
+}
 
 export default function ResumesPage() {
     const { user } = useUser();
@@ -17,126 +51,150 @@ export default function ResumesPage() {
     const resumes = useQuery(api.resumes.getResumesByUser, user?.id ? {} : "skip");
     const deleteResume = useMutation(api.resumes.deleteResume);
 
-    const filtered = resumes?.filter((r) => r.title.toLowerCase().includes(search.toLowerCase()));
-
-    const handleDelete = async (id: string) => {
-        await deleteResume({ id: id as Id<"resumes"> });
-        setDeleting(null);
-    };
+    const filtered = resumes?.filter((resume) =>
+        resume.title.toLowerCase().includes(search.toLowerCase()),
+    );
 
     return (
-        <DashboardLayout>
-            <div className="page-container-narrow">
-                {/* Header */}
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "32px" }}>
-                    <div>
-                        <h1 style={{ fontSize: "28px", fontWeight: 600, marginBottom: "4px" }}>My Resumes</h1>
-                        <p style={{ color: "var(--accents-5)", fontSize: "15px" }}>Manage all your created resumes</p>
-                    </div>
-                    <Link href="/dashboard/new" className="btn btn-primary">
-                        <Plus size={16} /> New Resume
-                    </Link>
-                </div>
-
-                {/* Search */}
-                <div style={{ position: "relative", marginBottom: "24px" }}>
-                    <Search size={18} style={{ position: "absolute", left: "14px", top: "50%", transform: "translateY(-50%)", color: "var(--accents-4)" }} />
-                    <input
-                        type="search"
-                        value={search}
-                        onChange={(e) => setSearch(e.target.value)}
-                        placeholder="Search resumes…"
-                        aria-label="Search resumes"
-                        className="input"
-                        style={{ paddingLeft: "44px" }}
-                    />
-                </div>
-
-                {/* List */}
-                {!resumes ? (
-                    <div style={{ display: "flex", justifyContent: "center", padding: "64px" }}>
-                        <div className="loader" />
-                    </div>
-                ) : filtered?.length === 0 ? (
-                    <div className="card" style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", padding: "64px 32px" }}>
-                        <FileText size={40} color="var(--accents-3)" style={{ marginBottom: "20px" }} />
-                        <p style={{ color: "var(--accents-5)", marginBottom: "20px", fontSize: "15px" }}>
-                            {search ? "No resumes match your search" : "No resumes yet"}
-                        </p>
-                        {!search && (
-                            <Link href="/dashboard/new" className="btn btn-primary">
-                                <Plus size={16} /> Create Resume
-                            </Link>
-                        )}
-                    </div>
-                ) : (
-                    <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-                        {filtered?.map((r) => (
-                            <div key={r._id} className="card" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "20px 24px" }}>
-                                <Link href={`/resume/${r._id}`} style={{ display: "flex", alignItems: "center", gap: "16px", flex: 1, textDecoration: "none", color: "inherit" }}>
-                                    <div style={{
-                                        width: "44px",
-                                        height: "44px",
-                                        borderRadius: "10px",
-                                        background: "var(--accents-1)",
-                                        display: "flex",
-                                        alignItems: "center",
-                                        justifyContent: "center"
-                                    }}>
-                                        <FileText size={20} color="var(--geist-foreground)" aria-hidden="true" />
-                                    </div>
-                                    <div>
-                                        <div style={{ fontSize: "15px", fontWeight: 500, marginBottom: "2px" }}>{r.title}</div>
-                                        <div style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "13px", color: "var(--accents-5)" }}>
-                                            <Clock size={12} />
-                                            {new Intl.DateTimeFormat(undefined, { dateStyle: "medium" }).format(new Date(r.createdAt))}
-                                            {r.resumeData?.fullName && <span>• {r.resumeData.fullName}</span>}
-                                        </div>
-                                    </div>
-                                </Link>
-
-                                <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-                                    {r.atsScore !== undefined && (
-                                        <span className={`badge ${r.atsScore >= 80 ? "badge-success" : r.atsScore >= 60 ? "badge-warning" : "badge-error"}`}>
-                                            {r.atsScore}%
-                                        </span>
-                                    )}
-
-                                    {deleting === r._id ? (
-                                        <div style={{ display: "flex", gap: "6px" }}>
-                                            <button onClick={() => handleDelete(r._id)} className="btn" style={{ height: "32px", padding: "0 12px", fontSize: "12px", background: "#c92a2a", color: "white", border: "none" }}>
-                                                Delete
-                                            </button>
-                                            <button onClick={() => setDeleting(null)} className="btn" style={{ height: "32px", padding: "0 12px", fontSize: "12px" }}>
-                                                Cancel
-                                            </button>
-                                        </div>
-                                    ) : (
-                                        <>
-                                            <button
-                                                type="button"
-                                                aria-label={`Delete ${r.title}`}
-                                                onClick={() => setDeleting(r._id)}
-                                                className="btn btn-ghost"
-                                                style={{ padding: "8px", height: "auto" }}
-                                            >
-                                                <Trash2 size={16} aria-hidden="true" />
-                                            </button>
-                                            <ArrowRight size={16} color="var(--accents-3)" />
-                                        </>
-                                    )}
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                )}
-
-                {resumes && resumes.length > 0 && (
-                    <p style={{ textAlign: "center", fontSize: "13px", color: "var(--accents-4)", marginTop: "28px" }}>
-                        {resumes.length} resume{resumes.length !== 1 ? "s" : ""} total
+        <PageBody size="narrow">
+            <div className="mb-8 flex items-start justify-between gap-4">
+                <div>
+                    <h1 className="font-heading text-3xl font-medium text-balance">
+                        My resumes
+                    </h1>
+                    <p className="mt-1 text-pretty text-muted-foreground">
+                        Open a file to preview, download, or check the ATS report.
                     </p>
-                )}
+                </div>
+                <Button nativeButton={false} render={<Link href="/dashboard/new" />}>
+                    <PlusIcon data-icon="inline-start" />
+                    New resume
+                </Button>
             </div>
-        </DashboardLayout>
+
+            <InputGroup className="mb-6">
+                <InputGroupAddon>
+                    <SearchIcon />
+                </InputGroupAddon>
+                <InputGroupInput
+                    type="search"
+                    value={search}
+                    onChange={(event) => setSearch(event.target.value)}
+                    placeholder="Search resumes…"
+                    aria-label="Search resumes"
+                />
+            </InputGroup>
+
+            {resumes == null ? (
+                <div
+                    className="flex justify-center py-16"
+                    aria-busy="true"
+                    aria-label="Loading resumes"
+                >
+                    <Spinner />
+                </div>
+            ) : filtered?.length === 0 ? (
+                <Empty className="border border-dashed">
+                    <EmptyHeader>
+                        <EmptyMedia variant="icon">
+                            <FileTextIcon aria-hidden="true" />
+                        </EmptyMedia>
+                        <EmptyTitle>
+                            {search ? "No resumes match that search" : "No resumes yet"}
+                        </EmptyTitle>
+                        <EmptyDescription>
+                            {search
+                                ? "Try a different title."
+                                : "Create one to rank live roles against your skills."}
+                        </EmptyDescription>
+                    </EmptyHeader>
+                    {!search ? (
+                        <EmptyContent>
+                            <Button nativeButton={false} render={<Link href="/dashboard/new" />}>
+                                <PlusIcon data-icon="inline-start" />
+                                Create resume
+                            </Button>
+                        </EmptyContent>
+                    ) : null}
+                </Empty>
+            ) : (
+                <ul className="flex flex-col gap-2">
+                    {filtered?.map((resume) => (
+                        <li key={resume._id}>
+                            <Card size="sm">
+                                <CardHeader className="flex flex-row items-center gap-3">
+                                    <Link
+                                        href={`/resume/${resume._id}`}
+                                        className="flex min-w-0 flex-1 items-center gap-3"
+                                    >
+                                        <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-muted">
+                                            <FileTextIcon aria-hidden="true" />
+                                        </span>
+                                        <div className="min-w-0">
+                                            <CardTitle className="truncate">{resume.title}</CardTitle>
+                                            <CardDescription className="flex items-center gap-1.5">
+                                                <ClockIcon />
+                                                {formatDate(resume.createdAt)}
+                                                {resume.resumeData?.fullName
+                                                    ? ` · ${resume.resumeData.fullName}`
+                                                    : null}
+                                            </CardDescription>
+                                        </div>
+                                    </Link>
+                                    <div className="flex shrink-0 items-center gap-2">
+                                        {resume.atsScore !== undefined ? (
+                                            <Badge
+                                                variant={atsVariant(resume.atsScore)}
+                                                className="font-mono tabular-nums"
+                                            >
+                                                {resume.atsScore}%
+                                            </Badge>
+                                        ) : null}
+                                        {deleting === resume._id ? (
+                                            <div className="flex gap-1.5">
+                                                <Button
+                                                    size="sm"
+                                                    variant="destructive"
+                                                    onClick={() =>
+                                                        deleteResume({
+                                                            id: resume._id as Id<"resumes">,
+                                                        }).then(() => setDeleting(null))
+                                                    }
+                                                >
+                                                    Delete
+                                                </Button>
+                                                <Button
+                                                    size="sm"
+                                                    variant="outline"
+                                                    onClick={() => setDeleting(null)}
+                                                >
+                                                    Cancel
+                                                </Button>
+                                            </div>
+                                        ) : (
+                                            <Button
+                                                type="button"
+                                                variant="ghost"
+                                                size="icon-sm"
+                                                aria-label={`Delete ${resume.title}`}
+                                                onClick={() => setDeleting(resume._id)}
+                                            >
+                                                <Trash2Icon />
+                                            </Button>
+                                        )}
+                                    </div>
+                                </CardHeader>
+                            </Card>
+                        </li>
+                    ))}
+                </ul>
+            )}
+
+            {resumes && resumes.length > 0 ? (
+                <p className="mt-6 text-center text-sm text-muted-foreground">
+                    {resumes.length} resume{resumes.length === 1 ? "" : "s"} total
+                </p>
+            ) : null}
+        </PageBody>
     );
 }

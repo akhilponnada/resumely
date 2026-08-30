@@ -1,6 +1,15 @@
 "use client";
 
-import { Check, AlertTriangle, X, Info } from "lucide-react";
+import { AlertTriangleIcon, CheckIcon, InfoIcon, XIcon } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
+import {
+    Card,
+    CardContent,
+    CardDescription,
+    CardHeader,
+    CardTitle,
+} from "@/components/ui/card";
 
 interface ATSCheck {
     id: string;
@@ -20,138 +29,144 @@ interface Props {
     strengths?: string[];
 }
 
-const TONE: Record<string, { color: string; bg: string; Icon: typeof Check }> = {
-    pass: { color: "#1a7f4b", bg: "rgba(26,127,75,0.10)", Icon: Check },
-    warn: { color: "#a15c00", bg: "rgba(161,92,0,0.10)", Icon: AlertTriangle },
-    fail: { color: "#b3261e", bg: "rgba(179,38,30,0.10)", Icon: X },
-};
+function statusVariant(status: string) {
+    if (status === "pass") return "default" as const;
+    if (status === "fail") return "destructive" as const;
+    return "secondary" as const;
+}
 
-export function ATSReport({ score, checks, matchedKeywords, missingKeywords, improvements, strengths }: Props) {
+function StatusIcon({ status }: { status: string }) {
+    if (status === "pass") return <CheckIcon />;
+    if (status === "fail") return <XIcon />;
+    return <AlertTriangleIcon />;
+}
+
+export function ATSReport({
+    score,
+    checks,
+    matchedKeywords,
+    missingKeywords,
+    improvements,
+    strengths,
+}: Props) {
     if (!checks?.length) {
         return (
-            <div style={{
-                border: "1px solid var(--accents-2)", borderRadius: "12px", padding: "24px",
-                display: "flex", gap: "12px", alignItems: "flex-start",
-            }}>
-                <Info size={18} style={{ flexShrink: 0, marginTop: "2px", opacity: 0.6 }} />
-                <div>
-                    <div style={{ fontWeight: 600, marginBottom: "4px" }}>No ATS breakdown for this resume</div>
-                    <div style={{ fontSize: "14px", opacity: 0.75, lineHeight: 1.55 }}>
-                        It was created before scoring was added. Regenerate it to get a full report.
-                    </div>
-                </div>
-            </div>
+            <Alert>
+                <InfoIcon />
+                <AlertTitle>No ATS breakdown for this resume</AlertTitle>
+                <AlertDescription>
+                    It was created before scoring was added. Generate it again to get a
+                    full report.
+                </AlertDescription>
+            </Alert>
         );
     }
 
-    const band = (score ?? 0) >= 80 ? "#1a7f4b" : (score ?? 0) >= 60 ? "#a15c00" : "#b3261e";
-
     return (
-        <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-            {/* Score */}
-            <div style={{
-                border: "1px solid var(--accents-2)", borderRadius: "12px", padding: "24px",
-                display: "flex", alignItems: "center", gap: "24px", flexWrap: "wrap",
-            }}>
-                <div style={{ display: "flex", alignItems: "baseline", gap: "4px" }}>
-                    <span style={{ fontSize: "48px", fontWeight: 700, color: band, lineHeight: 1 }}>{score ?? 0}</span>
-                    <span style={{ fontSize: "18px", opacity: 0.5 }}>/100</span>
-                </div>
-                <div style={{ flex: 1, minWidth: "240px" }}>
-                    <div style={{ fontWeight: 600, marginBottom: "4px" }}>ATS readiness</div>
-                    <div style={{ fontSize: "14px", opacity: 0.75, lineHeight: 1.55 }}>
-                        Calculated from the checks below, not estimated. The same resume always scores the same.
+        <div className="flex flex-col gap-4">
+            <Card>
+                <CardHeader className="flex flex-row items-center gap-6">
+                    <p className="font-mono text-5xl font-medium tabular-nums leading-none">
+                        {score ?? 0}
+                        <span className="text-lg text-muted-foreground">/100</span>
+                    </p>
+                    <div>
+                        <CardTitle>ATS readiness</CardTitle>
+                        <CardDescription>
+                            Calculated from the checks below, not estimated. The same resume
+                            always scores the same.
+                        </CardDescription>
                     </div>
-                </div>
-            </div>
+                </CardHeader>
+            </Card>
 
-            {/* Checks */}
-            <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-                {checks.map((c) => {
-                    const tone = TONE[c.status] ?? TONE.warn;
-                    const { Icon } = tone;
-                    return (
-                        <div key={c.id} style={{
-                            border: "1px solid var(--accents-2)", borderRadius: "10px", padding: "16px",
-                            display: "flex", gap: "12px", alignItems: "flex-start",
-                        }}>
-                            <span style={{
-                                width: "26px", height: "26px", borderRadius: "6px", flexShrink: 0,
-                                background: tone.bg, color: tone.color,
-                                display: "grid", placeItems: "center",
-                            }}>
-                                <Icon size={15} />
-                            </span>
-                            <div style={{ flex: 1, minWidth: 0 }}>
-                                <div style={{ display: "flex", justifyContent: "space-between", gap: "12px", marginBottom: "3px" }}>
-                                    <span style={{ fontWeight: 600, fontSize: "15px" }}>{c.label}</span>
-                                    <span style={{ fontSize: "13px", color: tone.color, fontWeight: 600, whiteSpace: "nowrap", fontVariantNumeric: "tabular-nums" }}>
-                                        {c.points}/{c.max}
-                                    </span>
+            <ul className="flex flex-col gap-2">
+                {checks.map((check) => (
+                    <li key={check.id}>
+                        <Card size="sm">
+                            <CardHeader className="flex flex-row items-start gap-3">
+                                <Badge
+                                    variant={statusVariant(check.status)}
+                                    className="mt-0.5 size-7 justify-center rounded-md px-0"
+                                >
+                                    <StatusIcon status={check.status} />
+                                    <span className="sr-only">{check.status}</span>
+                                </Badge>
+                                <div className="min-w-0 flex-1">
+                                    <div className="flex items-baseline justify-between gap-3">
+                                        <CardTitle>{check.label}</CardTitle>
+                                        <p className="font-mono text-xs tabular-nums text-muted-foreground">
+                                            {check.points}/{check.max}
+                                        </p>
+                                    </div>
+                                    <CardDescription>{check.detail}</CardDescription>
                                 </div>
-                                <div style={{ fontSize: "14px", opacity: 0.75, lineHeight: 1.55 }}>{c.detail}</div>
-                            </div>
-                        </div>
-                    );
-                })}
-            </div>
+                            </CardHeader>
+                        </Card>
+                    </li>
+                ))}
+            </ul>
 
-            {/* Keywords */}
-            {(matchedKeywords?.length || missingKeywords?.length) ? (
-                <div style={{ border: "1px solid var(--accents-2)", borderRadius: "12px", padding: "20px" }}>
-                    <div style={{ fontWeight: 600, marginBottom: "12px" }}>Keywords from the job description</div>
-                    {matchedKeywords?.length ? (
-                        <div style={{ marginBottom: missingKeywords?.length ? "14px" : 0 }}>
-                            <div style={{ fontSize: "12px", textTransform: "uppercase", letterSpacing: "0.06em", opacity: 0.6, marginBottom: "7px" }}>
-                                Found in your resume
+            {matchedKeywords?.length || missingKeywords?.length ? (
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Keywords from the job description</CardTitle>
+                    </CardHeader>
+                    <CardContent className="flex flex-col gap-4">
+                        {matchedKeywords?.length ? (
+                            <div className="flex flex-col gap-2">
+                                <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+                                    Found in your resume
+                                </p>
+                                <div className="flex flex-wrap gap-1.5">
+                                    {matchedKeywords.map((keyword) => (
+                                        <Badge key={keyword} variant="secondary">
+                                            {keyword}
+                                        </Badge>
+                                    ))}
+                                </div>
                             </div>
-                            <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
-                                {matchedKeywords.map((k) => (
-                                    <span key={k} style={{
-                                        fontSize: "13px", padding: "3px 9px", borderRadius: "5px",
-                                        background: TONE.pass.bg, color: TONE.pass.color,
-                                    }}>{k}</span>
-                                ))}
+                        ) : null}
+                        {missingKeywords?.length ? (
+                            <div className="flex flex-col gap-2">
+                                <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+                                    Missing — work these in where they are true
+                                </p>
+                                <div className="flex flex-wrap gap-1.5">
+                                    {missingKeywords.map((keyword) => (
+                                        <Badge key={keyword} variant="outline">
+                                            {keyword}
+                                        </Badge>
+                                    ))}
+                                </div>
                             </div>
-                        </div>
-                    ) : null}
-                    {missingKeywords?.length ? (
-                        <div>
-                            <div style={{ fontSize: "12px", textTransform: "uppercase", letterSpacing: "0.06em", opacity: 0.6, marginBottom: "7px" }}>
-                                Missing — work these in where they are true
-                            </div>
-                            <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
-                                {missingKeywords.map((k) => (
-                                    <span key={k} style={{
-                                        fontSize: "13px", padding: "3px 9px", borderRadius: "5px",
-                                        background: TONE.fail.bg, color: TONE.fail.color,
-                                    }}>{k}</span>
-                                ))}
-                            </div>
-                        </div>
-                    ) : null}
-                </div>
+                        ) : null}
+                    </CardContent>
+                </Card>
             ) : null}
 
-            {/* Model advice */}
-            {(strengths?.length || improvements?.length) ? (
-                <div style={{ border: "1px solid var(--accents-2)", borderRadius: "12px", padding: "20px" }}>
-                    <div style={{ fontWeight: 600, marginBottom: "12px" }}>Suggestions</div>
-                    {strengths?.length ? (
-                        <ul style={{ margin: "0 0 14px", paddingLeft: "18px", display: "flex", flexDirection: "column", gap: "6px" }}>
-                            {strengths.map((s, i) => (
-                                <li key={i} style={{ fontSize: "14px", lineHeight: 1.55 }}>{s}</li>
-                            ))}
-                        </ul>
-                    ) : null}
-                    {improvements?.length ? (
-                        <ul style={{ margin: 0, paddingLeft: "18px", display: "flex", flexDirection: "column", gap: "6px" }}>
-                            {improvements.map((s, i) => (
-                                <li key={i} style={{ fontSize: "14px", lineHeight: 1.55, opacity: 0.85 }}>{s}</li>
-                            ))}
-                        </ul>
-                    ) : null}
-                </div>
+            {strengths?.length || improvements?.length ? (
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Suggestions</CardTitle>
+                    </CardHeader>
+                    <CardContent className="flex flex-col gap-4">
+                        {strengths?.length ? (
+                            <ul className="flex list-disc flex-col gap-1.5 pl-5 text-sm">
+                                {strengths.map((item) => (
+                                    <li key={item}>{item}</li>
+                                ))}
+                            </ul>
+                        ) : null}
+                        {improvements?.length ? (
+                            <ul className="flex list-disc flex-col gap-1.5 pl-5 text-sm text-muted-foreground">
+                                {improvements.map((item) => (
+                                    <li key={item}>{item}</li>
+                                ))}
+                            </ul>
+                        ) : null}
+                    </CardContent>
+                </Card>
             ) : null}
         </div>
     );
