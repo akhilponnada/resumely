@@ -28,6 +28,10 @@ function stripHtml(html: string): string {
     return html
         .replace(/<script[\s\S]*?<\/script>/gi, " ")
         .replace(/<style[\s\S]*?<\/style>/gi, " ")
+        .replace(/<\/(h[1-6]|p|div|section|article|tr)>/gi, "\n\n")
+        .replace(/<br\s*\/?>/gi, "\n")
+        .replace(/<\/li>/gi, "\n")
+        .replace(/<li[^>]*>/gi, "• ")
         .replace(/<[^>]+>/g, " ")
         .replace(/&nbsp;/gi, " ")
         .replace(/&amp;/gi, "&")
@@ -35,9 +39,41 @@ function stripHtml(html: string): string {
         .replace(/&gt;/gi, ">")
         .replace(/&#39;|&apos;/gi, "'")
         .replace(/&quot;/gi, '"')
-        .replace(/\s+/g, " ")
+        .replace(/[ \t]+\n/g, "\n")
+        .replace(/\n{3,}/g, "\n\n")
+        .replace(/[ \t]{2,}/g, " ")
         .trim()
         .slice(0, DESC_MAX);
+}
+
+function parsePostedAt(value: unknown): number {
+    if (typeof value === "number" && Number.isFinite(value)) {
+        return value < 1e12 ? value * 1000 : value;
+    }
+    if (typeof value === "string" && value.trim()) {
+        const trimmed = value.trim();
+        if (/^\d+$/.test(trimmed)) {
+            const n = Number(trimmed);
+            return n < 1e12 ? n * 1000 : n;
+        }
+        const parsed = Date.parse(trimmed);
+        if (!Number.isNaN(parsed)) return parsed;
+    }
+    return Date.now();
+}
+
+function capPerCompany(jobs: NormalizedJob[], max: number): NormalizedJob[] {
+    const counts = new Map<string, number>();
+    const out: NormalizedJob[] = [];
+    const sorted = [...jobs].sort((a, b) => b.postedAt - a.postedAt);
+    for (const job of sorted) {
+        const key = job.company.trim().toLowerCase();
+        const n = counts.get(key) ?? 0;
+        if (n >= max) continue;
+        counts.set(key, n + 1);
+        out.push(job);
+    }
+    return out;
 }
 
 function workplaceFrom(location: string, remote?: boolean): string {
@@ -92,7 +128,7 @@ async function fetchGreenhouse(token: string, companyName?: string): Promise<Nor
         const title = String(j.title ?? "");
         const company = String(j.company_name ?? companyName ?? token);
         const descriptionText = stripHtml(String(j.content ?? ""));
-        const postedAt = Date.parse(String(j.updated_at ?? j.first_published ?? "")) || Date.now();
+        const postedAt = parsePostedAt(j.updated_at ?? j.first_published);
         const job: NormalizedJob = {
             source: "greenhouse",
             sourceId: String(j.id),
@@ -146,7 +182,7 @@ async function fetchLever(token: string, companyName?: string): Promise<Normaliz
             applyUrl: String(j.hostedUrl ?? j.applyUrl ?? ""),
             salary: undefined,
             tags: [cats.team, cats.commitment].filter(Boolean).map(String),
-            postedAt: typeof j.createdAt === "number" ? j.createdAt : Date.now(),
+            postedAt: parsePostedAt(j.createdAt),
             searchText: "",
         };
         job.searchText = searchText(job);
@@ -182,7 +218,7 @@ async function fetchAshby(token: string, companyName?: string): Promise<Normaliz
             descriptionText: stripHtml(String(j.descriptionHtml ?? j.descriptionPlain ?? "")),
             applyUrl: String(j.jobUrl ?? j.applyUrl ?? ""),
             tags: j.departmentName ? [String(j.departmentName)] : [],
-            postedAt: Date.parse(String(j.publishedAt ?? j.updatedAt ?? "")) || Date.now(),
+            postedAt: parsePostedAt(j.publishedAt ?? j.updatedAt),
             searchText: "",
         };
         job.searchText = searchText(job);
@@ -215,13 +251,13 @@ async function fetchRemoteOK(): Promise<NormalizedJob[]> {
             applyUrl: String(j.apply_url ?? j.url ?? ""),
             salary,
             tags,
-            postedAt: typeof j.epoch === "number" ? j.epoch * 1000 : Date.now(),
+            postedAt: parsePostedAt(typeof j.epoch === "number" ? j.epoch * 1000 : j.epoch),
             searchText: "",
         };
         job.searchText = searchText(job);
         if (job.title && job.applyUrl) out.push(job);
     }
-    return out;
+    return capPerCompany(out, 3);
 }
 
 async function fetchArbeitnow(): Promise<NormalizedJob[]> {
@@ -243,13 +279,13 @@ async function fetchArbeitnow(): Promise<NormalizedJob[]> {
             descriptionText: stripHtml(String(j.description ?? "")),
             applyUrl: String(j.url ?? ""),
             tags: [...tags, ...types].slice(0, 8),
-            postedAt: Date.parse(String(j.created_at ?? "")) || Date.now(),
+            postedAt: parsePostedAt(j.created_at),
             searchText: "",
         };
         job.searchText = searchText(job);
         if (job.title && job.applyUrl) out.push(job);
     }
-    return out;
+    return capPerCompany(out, 3);
 }
 
 async function fetchJobicy(): Promise<NormalizedJob[]> {
@@ -276,13 +312,13 @@ async function fetchJobicy(): Promise<NormalizedJob[]> {
             applyUrl: String(j.url ?? ""),
             salary,
             tags: [j.jobType, j.jobLevel, j.jobIndustry].filter(Boolean).map(String),
-            postedAt: Date.parse(String(j.pubDate ?? "")) || Date.now(),
+            postedAt: parsePostedAt(j.pubDate),
             searchText: "",
         };
         job.searchText = searchText(job);
         if (job.title && job.applyUrl) out.push(job);
     }
-    return out;
+    return capPerCompany(out, 3);
 }
 
 export const syncAll = internalAction({

@@ -107,6 +107,25 @@ export function companyInitials(name: string): string {
     return (parts[0][0] + parts[1][0]).toUpperCase();
 }
 
+const MARK_COLORS = [
+    "oklch(0.40 0.06 250)",
+    "oklch(0.38 0.05 30)",
+    "oklch(0.36 0.04 160)",
+    "oklch(0.39 0.05 300)",
+    "oklch(0.37 0.03 80)",
+    "oklch(0.35 0.04 220)",
+    "oklch(0.40 0.06 20)",
+    "oklch(0.38 0.04 190)",
+];
+
+export function companyMarkColor(name: string): string {
+    let hash = 0;
+    for (let i = 0; i < name.length; i++) {
+        hash = (hash * 33 + name.charCodeAt(i)) >>> 0;
+    }
+    return MARK_COLORS[hash % MARK_COLORS.length];
+}
+
 export function companyLogoCandidates(
     company: string,
     applyUrl?: string,

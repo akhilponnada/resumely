@@ -58,7 +58,7 @@ export function MarketPulse({
     }
 
     const remoteCount = market?.workplace.find((w) => w.id === "remote")?.count ?? 0;
-    const remoteShare = activeJobs
+    const remoteShare = market && activeJobs
         ? `${Math.round((remoteCount / Math.max(activeJobs, 1)) * 100)}%`
         : "—";
 
@@ -77,7 +77,7 @@ export function MarketPulse({
             />
             <StatCard
                 label="Companies"
-                value={(market?.companyCount ?? 0).toLocaleString()}
+                value={market ? market.companyCount.toLocaleString() : "—"}
                 hint="Hiring on this board"
             />
             <StatCard
@@ -92,7 +92,7 @@ export function MarketPulse({
                         {status === "running" ? <Badge variant="secondary">syncing</Badge> : null}
                     </CardDescription>
                     <CardTitle className="font-mono text-2xl tabular-nums tracking-tight">
-                        {(market?.postedLast7d ?? 0).toLocaleString()}
+                        {market ? market.postedLast7d.toLocaleString() : "—"}
                     </CardTitle>
                     <p className="text-xs text-muted-foreground">Posted in the last 7 days</p>
                 </CardHeader>

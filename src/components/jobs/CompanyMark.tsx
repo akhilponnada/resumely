@@ -1,10 +1,9 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useEffect, useMemo, useState } from "react";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 import { cn } from "@/lib/utils";
-import { companyInitials, companyLogoCandidates } from "@/lib/companyLogos";
+import { companyInitials, companyLogoCandidates, companyMarkColor } from "@/lib/companyLogos";
 
 export function CompanyMark({
     company,
@@ -24,28 +23,47 @@ export function CompanyMark({
         [company, applyUrl, logo]
     );
     const [index, setIndex] = useState(0);
+    const [showLogo, setShowLogo] = useState(false);
     const src = candidates[index];
+    const initials = companyInitials(company);
+    const color = companyMarkColor(company);
+
+    useEffect(() => {
+        setIndex(0);
+        setShowLogo(false);
+    }, [company, logo, applyUrl]);
 
     const mark = (
-        <Avatar
-            size={size}
+        <span
             className={cn(
-                "rounded-md bg-background after:rounded-md",
-                size === "lg" && "size-12"
+                "relative inline-flex shrink-0 items-center justify-center overflow-hidden rounded-md font-mono font-medium tracking-wide text-white select-none",
+                size === "sm" && "size-8 text-[10px]",
+                size === "default" && "size-9 text-[11px]",
+                size === "lg" && "size-12 text-sm"
             )}
+            style={{ backgroundColor: color }}
+            aria-hidden
         >
+            {initials}
             {src ? (
-                <AvatarImage
+                <img
+                    key={src}
                     src={src}
                     alt=""
-                    className="rounded-md object-contain p-0.5"
-                    onError={() => setIndex((i) => i + 1)}
+                    decoding="async"
+                    referrerPolicy="no-referrer"
+                    className={cn(
+                        "absolute inset-0 size-full bg-background object-contain p-0.5",
+                        !showLogo && "hidden"
+                    )}
+                    onLoad={() => setShowLogo(true)}
+                    onError={() => {
+                        setShowLogo(false);
+                        setIndex((i) => i + 1);
+                    }}
                 />
             ) : null}
-            <AvatarFallback className="rounded-md font-mono text-[10px] font-medium tracking-wide">
-                {companyInitials(company)}
-            </AvatarFallback>
-        </Avatar>
+        </span>
     );
 
     if (!hoverable) return mark;
@@ -57,14 +75,13 @@ export function CompanyMark({
             </HoverCardTrigger>
             <HoverCardContent className="w-auto min-w-40">
                 <div className="flex items-center gap-2">
-                    <Avatar size="sm" className="rounded-md after:rounded-md">
-                        {src ? (
-                            <AvatarImage src={src} alt="" className="rounded-md object-contain p-0.5" />
-                        ) : null}
-                        <AvatarFallback className="rounded-md font-mono text-[10px]">
-                            {companyInitials(company)}
-                        </AvatarFallback>
-                    </Avatar>
+                    <CompanyMark
+                        company={company}
+                        logo={logo}
+                        applyUrl={applyUrl}
+                        size="sm"
+                        hoverable={false}
+                    />
                     <div className="min-w-0">
                         <p className="truncate font-medium">{company}</p>
                         <p className="text-xs text-muted-foreground">From the posting</p>

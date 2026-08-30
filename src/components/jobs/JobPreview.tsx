@@ -4,13 +4,13 @@ import Link from "next/link";
 import { ArrowUpRightIcon, BookmarkIcon, BriefcaseIcon, FileTextIcon, LogInIcon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ButtonGroup } from "@/components/ui/button-group";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
 import { relativeTime } from "@/lib/jobMatch";
 import { sourceLabel, workplaceLabel } from "@/lib/companyLogos";
 import { CompanyMark } from "./CompanyMark";
+import { JobDescription } from "./JobDescription";
 import { MatchPanel } from "./MatchPanel";
 import type { BoardJob } from "./types";
 import type { JobMatch } from "@/lib/jobMatch";
@@ -87,7 +87,7 @@ export function JobPreview({
                     </div>
                 ) : null}
 
-                <ButtonGroup>
+                <div className="flex flex-wrap items-center gap-2">
                     <Button
                         nativeButton={false}
                         render={<a href={job.applyUrl} target="_blank" rel="noreferrer" />}
@@ -120,7 +120,7 @@ export function JobPreview({
                             Get matched
                         </Button>
                     )}
-                </ButtonGroup>
+                </div>
             </div>
 
             <Separator />
@@ -147,9 +147,7 @@ export function JobPreview({
                                 </Button>
                             ) : null}
                         </div>
-                        <div className="text-[15px] leading-7 whitespace-pre-wrap text-foreground/90">
-                            {job.descriptionText || "See the company posting for the full description."}
-                        </div>
+                        <JobDescription text={job.descriptionText} />
                     </div>
                 </div>
             </ScrollArea>

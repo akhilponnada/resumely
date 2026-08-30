@@ -21,6 +21,47 @@ const jobFields = {
     searchText: v.string(),
 };
 
+const SOURCE_WEIGHT: Record<string, number> = {
+    greenhouse: 0,
+    lever: 0,
+    ashby: 0,
+    remoteok: 1,
+    jobicy: 2,
+    arbeitnow: 3,
+};
+
+function diversifyJobs<T extends { company: string; source: string; postedAt: number }>(
+    jobs: T[],
+    limit: number,
+    maxPerCompany = 2,
+): T[] {
+    const ranked = [...jobs].sort((a, b) => {
+        const wa = SOURCE_WEIGHT[a.source] ?? 2;
+        const wb = SOURCE_WEIGHT[b.source] ?? 2;
+        if (wa !== wb) return wa - wb;
+        return b.postedAt - a.postedAt;
+    });
+    const counts = new Map<string, number>();
+    const picked = new Set<number>();
+    const out: T[] = [];
+    const keyOf = (company: string) => company.trim().toLowerCase();
+
+    const take = (respectCap: boolean) => {
+        for (let i = 0; i < ranked.length && out.length < limit; i++) {
+            if (picked.has(i)) continue;
+            const key = keyOf(ranked[i].company);
+            if (respectCap && (counts.get(key) ?? 0) >= maxPerCompany) continue;
+            picked.add(i);
+            counts.set(key, (counts.get(key) ?? 0) + 1);
+            out.push(ranked[i]);
+        }
+    };
+
+    take(true);
+    take(false);
+    return out;
+}
+
 export const listJobs = query({
     args: {
         paginationOpts: paginationOptsValidator,
@@ -30,6 +71,10 @@ export const listJobs = query({
     handler: async (ctx, args) => {
         const search = args.search?.trim();
         const workplace = args.workplace && args.workplace !== "all" ? args.workplace : undefined;
+        const requested = args.paginationOpts.numItems;
+        const fetchCount = search
+            ? requested
+            : Math.min(Math.max(requested * 8, 80), 240);
 
         if (search) {
             return await ctx.db
@@ -41,21 +86,24 @@ export const listJobs = query({
                 .paginate(args.paginationOpts);
         }
 
-        if (workplace) {
-            return await ctx.db
+        const page = workplace
+            ? await ctx.db
                 .query("jobs")
                 .withIndex("by_workplace_active_postedAt", (q) =>
                     q.eq("workplace", workplace).eq("isActive", true)
                 )
                 .order("desc")
-                .paginate(args.paginationOpts);
-        }
+                .paginate({ ...args.paginationOpts, numItems: fetchCount })
+            : await ctx.db
+                .query("jobs")
+                .withIndex("by_active_postedAt", (q) => q.eq("isActive", true))
+                .order("desc")
+                .paginate({ ...args.paginationOpts, numItems: fetchCount });
 
-        return await ctx.db
-            .query("jobs")
-            .withIndex("by_active_postedAt", (q) => q.eq("isActive", true))
-            .order("desc")
-            .paginate(args.paginationOpts);
+        return {
+            ...page,
+            page: diversifyJobs(page.page, requested),
+        };
     },
 });
 
@@ -135,11 +183,19 @@ export const getMarketPulse = query({
     args: {},
     handler: async (ctx) => {
         const last = await ctx.db.query("crawlRuns").withIndex("by_startedAt").order("desc").first();
+        let market = last?.market ?? null;
+        if (!market) {
+            const sample = await ctx.db
+                .query("jobs")
+                .withIndex("by_active_postedAt", (q) => q.eq("isActive", true))
+                .take(2000);
+            market = tallyMarket(sample);
+        }
         return {
             activeJobs: last?.activeJobs ?? 0,
             lastSyncAt: last?.finishedAt ?? last?.startedAt ?? 0,
             status: last?.status ?? "idle",
-            market: last?.market ?? null,
+            market,
         };
     },
 });

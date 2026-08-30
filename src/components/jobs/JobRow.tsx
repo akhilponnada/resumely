@@ -44,7 +44,7 @@ export function JobRow({
             variant={selected ? "muted" : "default"}
             size="sm"
             className={cn(
-                "cursor-pointer rounded-none border-x-0 border-t-0",
+                "cursor-pointer flex-nowrap rounded-none border-x-0 border-t-0",
                 selected && "bg-muted"
             )}
             onClick={onSelect}
@@ -120,7 +120,7 @@ export function JobRow({
                         </Tooltip>
                     ) : null}
                 </div>
-                <MatchScore score={match?.score} />
+                {match?.score != null ? <MatchScore score={match.score} /> : null}
             </ItemActions>
         </Item>
     );
