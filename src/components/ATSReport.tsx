@@ -27,6 +27,8 @@ interface Props {
     missingKeywords?: string[];
     improvements?: string[];
     strengths?: string[];
+    variant?: "readiness" | "fit";
+    jobLabel?: string;
 }
 
 function statusVariant(status: string) {
@@ -48,19 +50,22 @@ export function ATSReport({
     missingKeywords,
     improvements,
     strengths,
+    variant = "readiness",
+    jobLabel,
 }: Props) {
     if (!checks?.length) {
         return (
             <Alert>
                 <InfoIcon />
-                <AlertTitle>No ATS breakdown for this resume</AlertTitle>
+                <AlertTitle>No breakdown for this resume</AlertTitle>
                 <AlertDescription>
-                    It was created before scoring was added. Generate it again to get a
-                    full report.
+                    Save the resume in the editor to generate a full breakdown.
                 </AlertDescription>
             </Alert>
         );
     }
+
+    const isFit = variant === "fit";
 
     return (
         <div className="flex flex-col gap-4">
@@ -71,10 +76,17 @@ export function ATSReport({
                         <span className="text-lg text-muted-foreground">/100</span>
                     </p>
                     <div>
-                        <CardTitle>ATS readiness</CardTitle>
+                        <CardTitle>
+                            {isFit
+                                ? jobLabel
+                                    ? `ATS fit · ${jobLabel}`
+                                    : "ATS fit"
+                                : "Resume readiness"}
+                        </CardTitle>
                         <CardDescription>
-                            Calculated from the checks below, not estimated. The same resume
-                            always scores the same.
+                            {isFit
+                                ? "Keyword overlap with this posting plus structure, bullets, and dates. Same resume, same number."
+                                : "Structure, contact details, bullets, and dates. Keyword match is scored when you tailor this to a job."}
                         </CardDescription>
                     </div>
                 </CardHeader>
@@ -107,7 +119,7 @@ export function ATSReport({
                 ))}
             </ul>
 
-            {matchedKeywords?.length || missingKeywords?.length ? (
+            {isFit && (matchedKeywords?.length || missingKeywords?.length) ? (
                 <Card>
                     <CardHeader>
                         <CardTitle>Keywords from the job description</CardTitle>

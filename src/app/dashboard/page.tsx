@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/empty";
 import { Badge } from "@/components/ui/badge";
 import { Spinner } from "@/components/ui/spinner";
+import { pickPrimary, resumeKind, skillCount, tailoredFor } from "@/lib/resume-model";
 
 function formatDate(value: number) {
     return new Intl.DateTimeFormat(undefined, { dateStyle: "medium" }).format(
@@ -33,14 +34,9 @@ function formatDate(value: number) {
 export default function Dashboard() {
     const { user } = useUser();
     const resumes = useQuery(api.resumes.getResumesByUser, user?.id ? {} : "skip");
-
+    const primary = pickPrimary(resumes);
+    const tailoredCount = resumes?.filter((resume) => resumeKind(resume) === "tailored").length ?? 0;
     const totalResumes = resumes?.length ?? 0;
-    const averageATS =
-        resumes && resumes.length > 0
-            ? Math.round(
-                  resumes.reduce((acc, r) => acc + (r.atsScore || 0), 0) / resumes.length,
-              )
-            : 0;
 
     const userName = `${user?.firstName || ""} ${user?.lastName || ""}`.toLowerCase();
     const isSpecialUser =
@@ -66,24 +62,28 @@ export default function Dashboard() {
                     Welcome back{user?.firstName ? `, ${user.firstName}` : ""}
                 </h1>
                 <p className="mt-1 text-pretty text-muted-foreground">
-                    Manage resumes and match them to live roles.
+                    {primary
+                        ? "Jobs are ranked against your matching resume. Tailor a copy when you apply."
+                        : "Add a matching resume, then every live role gets a score."}
                 </p>
             </header>
 
             <div className="mb-10 grid grid-cols-1 gap-3 sm:grid-cols-3">
                 <Card size="sm">
                     <CardHeader>
-                        <CardDescription>Resumes</CardDescription>
-                        <CardTitle className="font-mono text-2xl tabular-nums">
-                            {resumes == null ? "—" : totalResumes.toLocaleString()}
+                        <CardDescription>Matching resume</CardDescription>
+                        <CardTitle className="truncate text-xl">
+                            {resumes == null
+                                ? "—"
+                                : primary?.resumeData.fullName || primary?.title || "None"}
                         </CardTitle>
                     </CardHeader>
                 </Card>
                 <Card size="sm">
                     <CardHeader>
-                        <CardDescription>Avg ATS score</CardDescription>
+                        <CardDescription>Skills on file</CardDescription>
                         <CardTitle className="font-mono text-2xl tabular-nums">
-                            {resumes == null ? "—" : `${averageATS}%`}
+                            {resumes == null ? "—" : skillCount(primary?.resumeData).toLocaleString()}
                         </CardTitle>
                     </CardHeader>
                 </Card>
@@ -91,7 +91,7 @@ export default function Dashboard() {
                     <Card size="sm" className="h-full bg-foreground text-background">
                         <CardHeader>
                             <CardDescription className="text-background/70">
-                                Jobs
+                                {tailoredCount} tailored {tailoredCount === 1 ? "copy" : "copies"}
                             </CardDescription>
                             <CardTitle>Get matched</CardTitle>
                         </CardHeader>
@@ -127,15 +127,15 @@ export default function Dashboard() {
                         <EmptyMedia variant="icon">
                             <FileTextIcon aria-hidden="true" />
                         </EmptyMedia>
-                        <EmptyTitle>No resumes yet</EmptyTitle>
+                        <EmptyTitle>No matching resume yet</EmptyTitle>
                         <EmptyDescription>
-                            Create one to rank live roles against your skills.
+                            Add one to rank live roles against your skills.
                         </EmptyDescription>
                     </EmptyHeader>
                     <EmptyContent>
                         <Button nativeButton={false} render={<Link href="/dashboard/new" />}>
                             <PlusIcon data-icon="inline-start" />
-                            Create resume
+                            Add resume
                         </Button>
                     </EmptyContent>
                 </Empty>
@@ -148,19 +148,23 @@ export default function Dashboard() {
                                 className="flex items-center justify-between gap-4 rounded-xl bg-card px-4 py-4 ring-1 ring-foreground/10 hover:bg-muted"
                             >
                                 <div className="min-w-0">
-                                    <p className="truncate font-medium">{resume.title}</p>
+                                    <p className="truncate font-medium">
+                                        {resumeKind(resume) === "tailored"
+                                            ? tailoredFor(resume)
+                                            : resume.resumeData.fullName || resume.title}
+                                    </p>
                                     <p className="text-sm text-muted-foreground">
                                         {formatDate(resume.createdAt)}
                                     </p>
                                 </div>
-                                {resume.atsScore !== undefined ? (
-                                    <Badge
-                                        variant={resume.atsScore >= 80 ? "default" : "secondary"}
-                                        className="font-mono tabular-nums"
-                                    >
-                                        {resume.atsScore}%
+                                <div className="flex shrink-0 items-center gap-1.5">
+                                    <Badge variant={resumeKind(resume) === "tailored" ? "secondary" : "outline"}>
+                                        {resumeKind(resume) === "tailored" ? "Tailored" : "Base"}
                                     </Badge>
-                                ) : null}
+                                    {resume._id === primary?._id ? (
+                                        <Badge>Matching</Badge>
+                                    ) : null}
+                                </div>
                             </Link>
                         </li>
                     ))}

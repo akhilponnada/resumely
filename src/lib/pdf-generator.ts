@@ -1,4 +1,5 @@
 import { jsPDF } from "jspdf";
+import { skillRows } from "./resume-model";
 import { ResumeData } from "./types";
 
 export async function generatePDF(data: ResumeData): Promise<Blob> {
@@ -12,19 +13,6 @@ export async function generatePDF(data: ResumeData): Promise<Blob> {
     const margin = 50;
     const contentWidth = pageWidth - margin * 2;
     let y = 50;
-
-    // Helper function for text
-    const addText = (
-        text: string,
-        x: number,
-        fontSize: number,
-        fontStyle: "normal" | "bold" | "italic" | "bolditalic" = "normal",
-        align: "left" | "center" | "right" = "left"
-    ) => {
-        doc.setFontSize(fontSize);
-        doc.setFont("times", fontStyle);
-        doc.text(text, x, y, { align });
-    };
 
     // Right-aligned runs (dates, locations) share a baseline with left-aligned
     // text, and some PDF text extractors concatenate adjacent runs with no
@@ -80,39 +68,7 @@ export async function generatePDF(data: ResumeData): Promise<Blob> {
         y += summaryLines.length * 11 + 10;
     }
 
-    // Education
-    if (data.education && data.education.length > 0) {
-        checkPageBreak(60);
-        doc.setFontSize(11);
-        doc.setFont("times", "bold");
-        doc.text("EDUCATION", margin, y);
-        y += 4;
-        addSectionLine();
-
-        for (const edu of data.education) {
-            checkPageBreak(40);
-            doc.setFontSize(10);
-            doc.setFont("times", "bold");
-            doc.text(edu.institution, margin, y);
-            if (edu.location) {
-                doc.setFont("times", "normal");
-                doc.text(` ${edu.location}`, pageWidth - margin, y, { align: "right" });
-            }
-            y += 12;
-
-            doc.setFont("times", "italic");
-            doc.setFontSize(9);
-            const degreeText = edu.gpa ? `${edu.degree}; GPA: ${edu.gpa}` : edu.degree;
-            doc.text(degreeText, margin, y);
-            if (edu.startDate || edu.endDate) {
-                doc.text(` ${edu.startDate || ""} – ${edu.endDate || ""}`, pageWidth - margin, y, { align: "right" });
-            }
-            y += 14;
-        }
-        y += 6;
-    }
-
-    // Experience
+    // Experience first — this is a job-hunt resume, not an academic CV.
     if (data.experience && data.experience.length > 0) {
         checkPageBreak(60);
         doc.setFontSize(11);
@@ -140,9 +96,10 @@ export async function generatePDF(data: ResumeData): Promise<Blob> {
             }
             y += 12;
 
-            if (exp.highlights && exp.highlights.length > 0) {
+            const highlights = (exp.highlights ?? []).filter((h) => h.trim());
+            if (highlights.length > 0) {
                 doc.setFont("times", "normal");
-                for (const highlight of exp.highlights) {
+                for (const highlight of highlights) {
                     checkPageBreak(15);
                     const lines = doc.splitTextToSize(`• ${highlight}`, contentWidth - 10);
                     doc.text(lines, margin + 10, y);
@@ -180,10 +137,11 @@ export async function generatePDF(data: ResumeData): Promise<Blob> {
             }
             y += 12;
 
-            if (project.highlights && project.highlights.length > 0) {
+            const highlights = (project.highlights ?? []).filter((h) => h.trim());
+            if (highlights.length > 0) {
                 doc.setFont("times", "normal");
                 doc.setFontSize(9);
-                for (const highlight of project.highlights) {
+                for (const highlight of highlights) {
                     checkPageBreak(15);
                     const lines = doc.splitTextToSize(`• ${highlight}`, contentWidth - 10);
                     doc.text(lines, margin + 10, y);
@@ -192,6 +150,61 @@ export async function generatePDF(data: ResumeData): Promise<Blob> {
             }
             y += 8;
         }
+    }
+
+    const skillList = skillRows(data);
+    if (skillList.length) {
+        checkPageBreak(80);
+        doc.setFontSize(11);
+        doc.setFont("times", "bold");
+        doc.text("TECHNICAL SKILLS", margin, y);
+        y += 4;
+        addSectionLine();
+
+        doc.setFontSize(9);
+        for (const row of skillList) {
+            checkPageBreak(16);
+            const label = `${row.label}: `;
+            doc.setFont("times", "bold");
+            doc.text(label, margin, y);
+            doc.setFont("times", "normal");
+            const lines = doc.splitTextToSize(row.values.join(", "), contentWidth - doc.getTextWidth(label));
+            doc.text(lines, margin + doc.getTextWidth(label), y);
+            y += Math.max(lines.length, 1) * 11;
+        }
+        y += 6;
+    }
+
+    // Education
+    if (data.education && data.education.length > 0) {
+        checkPageBreak(60);
+        doc.setFontSize(11);
+        doc.setFont("times", "bold");
+        doc.text("EDUCATION", margin, y);
+        y += 4;
+        addSectionLine();
+
+        for (const edu of data.education) {
+            checkPageBreak(40);
+            doc.setFontSize(10);
+            doc.setFont("times", "bold");
+            doc.text(edu.institution, margin, y);
+            if (edu.location) {
+                doc.setFont("times", "normal");
+                doc.text(` ${edu.location}`, pageWidth - margin, y, { align: "right" });
+            }
+            y += 12;
+
+            doc.setFont("times", "italic");
+            doc.setFontSize(9);
+            const degreeText = edu.gpa ? `${edu.degree}; GPA: ${edu.gpa}` : edu.degree;
+            doc.text(degreeText, margin, y);
+            if (edu.startDate || edu.endDate) {
+                doc.text(` ${edu.startDate || ""} – ${edu.endDate || ""}`, pageWidth - margin, y, { align: "right" });
+            }
+            y += 14;
+        }
+        y += 6;
     }
 
     // Certifications
@@ -217,55 +230,6 @@ export async function generatePDF(data: ResumeData): Promise<Blob> {
                 doc.text(` ${cert.date}`, pageWidth - margin, y, { align: "right" });
             }
             y += 14;
-        }
-        y += 6;
-    }
-
-    // Technical Skills
-    if (data.skills) {
-        checkPageBreak(80);
-        doc.setFontSize(11);
-        doc.setFont("times", "bold");
-        doc.text("TECHNICAL SKILLS", margin, y);
-        y += 4;
-        addSectionLine();
-
-        doc.setFontSize(9);
-        const skills = data.skills;
-
-        if (skills.languages && skills.languages.length > 0) {
-            doc.setFont("times", "bold");
-            doc.text("Languages: ", margin, y);
-            doc.setFont("times", "normal");
-            doc.text(skills.languages.join(", "), margin + doc.getTextWidth("Languages: "), y);
-            y += 11;
-        }
-        if (skills.frameworks && skills.frameworks.length > 0) {
-            doc.setFont("times", "bold");
-            doc.text("Frameworks: ", margin, y);
-            doc.setFont("times", "normal");
-            doc.text(skills.frameworks.join(", "), margin + doc.getTextWidth("Frameworks: "), y);
-            y += 11;
-        }
-        if (skills.tools && skills.tools.length > 0) {
-            doc.setFont("times", "bold");
-            doc.text("Developer Tools: ", margin, y);
-            doc.setFont("times", "normal");
-            doc.text(skills.tools.join(", "), margin + doc.getTextWidth("Developer Tools: "), y);
-            y += 11;
-        }
-        if (skills.libraries && skills.libraries.length > 0) {
-            doc.setFont("times", "bold");
-            doc.text("Libraries: ", margin, y);
-            doc.setFont("times", "normal");
-            doc.text(skills.libraries.join(", "), margin + doc.getTextWidth("Libraries: "), y);
-            y += 11;
-        }
-        if (skills.soft && skills.soft.length > 0) {
-            doc.setFont("times", "bold");
-            doc.text("Soft Skills: ", margin, y);
-            doc.setFont("times", "normal");
-            doc.text(skills.soft.join(", "), margin + doc.getTextWidth("Soft Skills: "), y);
         }
     }
 

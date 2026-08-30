@@ -22,7 +22,7 @@ export function MatchFitChart({ scores }: { scores: number[] }) {
     return (
         <Card>
             <CardHeader>
-                <CardDescription>This page · your latest resume</CardDescription>
+                <CardDescription>This page · your matching resume</CardDescription>
                 <CardTitle>Fit distribution</CardTitle>
                 <CardAction>
                     <div className="text-right">

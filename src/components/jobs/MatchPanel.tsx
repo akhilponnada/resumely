@@ -12,12 +12,10 @@ import { matchSummary, type JobMatch } from "@/lib/jobMatch";
 
 export function MatchPanel({
     match,
-    jobId,
     resumeTitle,
     signedIn,
 }: {
     match: JobMatch | null;
-    jobId: string;
     resumeTitle?: string;
     signedIn: boolean;
 }) {
@@ -48,7 +46,7 @@ export function MatchPanel({
                 </AlertDescription>
                 <AlertAction>
                     <Button nativeButton={false} render={<Link href="/dashboard/new" />} size="sm">
-                        Create a resume
+                        Add resume
                     </Button>
                 </AlertAction>
             </Alert>
@@ -58,28 +56,18 @@ export function MatchPanel({
     return (
         <Card size="sm">
             <CardHeader>
-                <CardDescription>{resumeTitle ?? "Latest resume"}</CardDescription>
-                <CardTitle>ATS match</CardTitle>
+                <CardDescription>{resumeTitle ?? "Matching resume"}</CardDescription>
+                <CardTitle>Match</CardTitle>
             </CardHeader>
             <CardContent className="flex flex-col gap-4">
-                <div className="flex items-end justify-between gap-3">
-                    <div>
-                        <div className="font-mono text-4xl font-medium tracking-tight tabular-nums">
-                            {match.score}
-                            <span className="text-base text-muted-foreground">%</span>
-                        </div>
-                        <p className="mt-1 max-w-prose text-sm text-muted-foreground">
-                            {matchSummary(match)}
-                        </p>
+                <div>
+                    <div className="font-mono text-4xl font-medium tracking-tight tabular-nums">
+                        {match.score}
+                        <span className="text-base text-muted-foreground">%</span>
                     </div>
-                    <Button
-                        nativeButton={false}
-                        render={<Link href={`/dashboard/new?job=${jobId}`} />}
-                        size="sm"
-                    >
-                        <FileTextIcon data-icon="inline-start" />
-                        Tailor resume
-                    </Button>
+                    <p className="mt-1 max-w-prose text-sm text-muted-foreground">
+                        {matchSummary(match)}
+                    </p>
                 </div>
 
                 <div className="flex flex-col gap-3">

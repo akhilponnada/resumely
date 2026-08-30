@@ -139,44 +139,33 @@ export function computeATS(data: ResumeData, jobDescription?: string): ATSResult
     // -- vocabulary overlap with the posting ----------------------------------
     const matchedKeywords: string[] = [];
     const missingKeywords: string[] = [];
-    {
+    if (jobDescription?.trim()) {
         const max = 30;
-        if (jobDescription?.trim()) {
-            const counts = new Map<string, number>();
-            for (const t of tokenize(jobDescription)) {
-                counts.set(t, (counts.get(t) ?? 0) + 1);
-            }
-            // Terms the posting leans on hardest are the ones worth matching.
-            const ranked = [...counts.entries()]
-                .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
-                .slice(0, 30)
-                .map(([t]) => t);
-
-            for (const term of ranked) {
-                if (resumeTokens.has(term)) matchedKeywords.push(term);
-                else missingKeywords.push(term);
-            }
-
-            const ratio = ranked.length ? matchedKeywords.length / ranked.length : 0;
-            const points = Math.round(ratio * max);
-            checks.push({
-                id: "keywords",
-                label: "Keyword match",
-                points, max,
-                status: ratio >= 0.6 ? "pass" : ratio >= 0.35 ? "warn" : "fail",
-                detail: `Matched ${matchedKeywords.length} of the posting's ${ranked.length} most-used terms.` +
-                    (missingKeywords.length ? ` Consider working in: ${missingKeywords.slice(0, 8).join(", ")}.` : ""),
-            });
-        } else {
-            // No posting to compare against; award the midpoint and say why.
-            checks.push({
-                id: "keywords",
-                label: "Keyword match",
-                points: Math.round(max * 0.5), max,
-                status: "warn",
-                detail: "No job description supplied, so keyword matching could not run. Paste one to see how this resume scores against a specific posting.",
-            });
+        const counts = new Map<string, number>();
+        for (const t of tokenize(jobDescription)) {
+            counts.set(t, (counts.get(t) ?? 0) + 1);
         }
+        // Terms the posting leans on hardest are the ones worth matching.
+        const ranked = [...counts.entries()]
+            .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+            .slice(0, 30)
+            .map(([t]) => t);
+
+        for (const term of ranked) {
+            if (resumeTokens.has(term)) matchedKeywords.push(term);
+            else missingKeywords.push(term);
+        }
+
+        const ratio = ranked.length ? matchedKeywords.length / ranked.length : 0;
+        const points = Math.round(ratio * max);
+        checks.push({
+            id: "keywords",
+            label: "Keyword match",
+            points, max,
+            status: ratio >= 0.6 ? "pass" : ratio >= 0.35 ? "warn" : "fail",
+            detail: `Matched ${matchedKeywords.length} of the posting's ${ranked.length} most-used terms.` +
+                (missingKeywords.length ? ` Consider working in: ${missingKeywords.slice(0, 8).join(", ")}.` : ""),
+        });
     }
 
     // -- measurable outcomes --------------------------------------------------
@@ -242,6 +231,8 @@ export function computeATS(data: ResumeData, jobDescription?: string): ATSResult
         });
     }
 
-    const score = Math.max(0, Math.min(100, checks.reduce((sum, c) => sum + c.points, 0)));
+    const raw = checks.reduce((sum, c) => sum + c.points, 0);
+    const maxTotal = checks.reduce((sum, c) => sum + c.max, 0) || 1;
+    const score = Math.max(0, Math.min(100, Math.round((raw / maxTotal) * 100)));
     return { score, checks, matchedKeywords, missingKeywords };
 }

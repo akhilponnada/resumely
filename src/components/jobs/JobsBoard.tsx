@@ -23,6 +23,7 @@ import { MarketPulse } from "./MarketPulse";
 import { QuietErrorBoundary } from "./QuietErrorBoundary";
 import { useHiddenJobs } from "./useHiddenJobs";
 import { matchJob } from "@/lib/jobMatch";
+import { pickPrimary } from "@/lib/resume-model";
 import type { ResumeData } from "@/lib/types";
 import type { BoardJob, RankedJob } from "./types";
 
@@ -79,7 +80,8 @@ export function JobsBoard({
     const savedRows = useQuery(api.jobs.listSaved, user?.id && savedOnly ? {} : "skip");
     const toggleSave = useMutation(api.jobs.toggleSave);
 
-    const latestResume = resumes?.[0]?.resumeData as ResumeData | undefined;
+    const primary = pickPrimary(resumes);
+    const matchResume = primary?.resumeData as ResumeData | undefined;
     const savedSet = useMemo(() => new Set((saved ?? []).map(String)), [saved]);
 
     const { results, status, loadMore } = usePaginatedQuery(
@@ -114,8 +116,8 @@ export function JobsBoard({
                 return job.workplace === workplace;
             })
             .map((job) => {
-                const match = latestResume
-                    ? matchJob(latestResume, {
+                const match = matchResume
+                    ? matchJob(matchResume, {
                         title: job.title,
                         company: job.company,
                         descriptionText: job.descriptionText,
@@ -125,11 +127,11 @@ export function JobsBoard({
                     : null;
                 return { job, match };
             });
-        if (sort === "match" && latestResume) {
+        if (sort === "match" && matchResume) {
             return [...rows].sort((a, b) => (b.match?.score ?? 0) - (a.match?.score ?? 0));
         }
         return rows;
-    }, [sourceJobs, latestResume, sort, hidden, savedOnly, debounced, workplace]);
+    }, [sourceJobs, matchResume, sort, hidden, savedOnly, debounced, workplace]);
 
     const selected = ranked.find((row) => row.job._id === selectedId) ?? ranked[0] ?? null;
     const loading = savedOnly ? savedRows === undefined : status === "LoadingFirstPage";
@@ -177,7 +179,7 @@ export function JobsBoard({
         <JobPreview
             job={selected?.job ?? null}
             match={selected?.match ?? null}
-            resumeTitle={resumes?.[0]?.title}
+            resumeTitle={primary?.title}
             signedIn={Boolean(user)}
             saved={selected ? savedSet.has(selected.job._id) : false}
             onSave={user && selected ? () => onSave(selected.job._id) : undefined}
@@ -226,7 +228,7 @@ export function JobsBoard({
                         ))}
                     </ToggleGroup>
 
-                    {latestResume ? (
+                    {matchResume ? (
                         <ToggleGroup
                             value={[sort]}
                             onValueChange={(v) => {

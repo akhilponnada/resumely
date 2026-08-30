@@ -9,7 +9,7 @@ import {
   BriefcaseIcon,
   ChevronRightIcon,
   ChevronsUpDownIcon,
-  FilePlusIcon,
+  FileTextIcon,
   FilesIcon,
   LayoutDashboardIcon,
   LogOutIcon,
@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { api } from "../../convex/_generated/api";
 import type { Id } from "../../convex/_generated/dataModel";
+import { pickPrimary } from "@/lib/resume-model";
 import { BrandMark } from "@/components/BrandMark";
 import {
   AlertDialog,
@@ -59,17 +60,13 @@ import {
   SidebarRail,
 } from "@/components/ui/sidebar";
 
-const NAV = [
-  { name: "Dashboard", href: "/dashboard", icon: LayoutDashboardIcon },
-  { name: "Jobs", href: "/dashboard/jobs", icon: BriefcaseIcon },
-  { name: "Create resume", href: "/dashboard/new", icon: FilePlusIcon },
-  { name: "My resumes", href: "/dashboard/resumes", icon: FilesIcon },
-] as const;
-
 function isNavActive(pathname: string, href: string) {
   if (href === "/dashboard") return pathname === "/dashboard";
   if (href === "/dashboard/resumes") {
-    return pathname.startsWith("/dashboard/resumes") || pathname.startsWith("/resume/");
+    return pathname.startsWith("/dashboard/resumes");
+  }
+  if (href.startsWith("/resume/") || href === "/dashboard/new") {
+    return pathname.startsWith("/resume/") || pathname.startsWith("/dashboard/new");
   }
   return pathname === href || pathname.startsWith(`${href}/`);
 }
@@ -80,6 +77,15 @@ export function AppSidebar() {
   const { user } = useUser();
   const { signOut } = useClerk();
   const chats = useQuery(api.chats.getChats, user?.id ? {} : "skip");
+  const resumes = useQuery(api.resumes.getResumesByUser, user?.id ? {} : "skip");
+  const primary = pickPrimary(resumes);
+  const resumeHref = primary ? `/resume/${primary._id}` : "/dashboard/new";
+  const nav = [
+    { name: "Dashboard", href: "/dashboard", icon: LayoutDashboardIcon },
+    { name: "Jobs", href: "/dashboard/jobs", icon: BriefcaseIcon },
+    { name: primary ? "Resume" : "Add resume", href: resumeHref, icon: FileTextIcon },
+    { name: "All resumes", href: "/dashboard/resumes", icon: FilesIcon },
+  ] as const;
   const deleteChat = useMutation(api.chats.deleteChat);
   const [deleteId, setDeleteId] = useState<Id<"chats"> | null>(null);
   const isChat = pathname.startsWith("/dashboard/chat");
@@ -112,7 +118,7 @@ export function AppSidebar() {
             <SidebarGroupLabel>Menu</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
-                {NAV.map((item) => (
+                {nav.map((item) => (
                   <SidebarMenuItem key={item.href}>
                     <SidebarMenuButton
                       isActive={isNavActive(pathname, item.href)}

@@ -20,6 +20,7 @@ import {
 import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyTitle } from "@/components/ui/empty";
 import { JobPreview } from "./JobPreview";
 import { matchJob } from "@/lib/jobMatch";
+import { pickPrimary } from "@/lib/resume-model";
 import type { ResumeData } from "@/lib/types";
 import type { BoardJob } from "./types";
 
@@ -37,9 +38,10 @@ export function JobDetailView({
     const resumes = useQuery(api.resumes.getResumesByUser, user?.id ? {} : "skip");
     const savedIds = useQuery(api.jobs.savedIds, user?.id ? {} : "skip");
     const toggleSave = useMutation(api.jobs.toggleSave);
-    const latest = resumes?.[0]?.resumeData as ResumeData | undefined;
-    const match = job && latest
-        ? matchJob(latest, {
+    const primary = pickPrimary(resumes);
+    const matchResume = primary?.resumeData as ResumeData | undefined;
+    const match = job && matchResume
+        ? matchJob(matchResume, {
             title: job.title,
             company: job.company,
             descriptionText: job.descriptionText,
@@ -100,7 +102,7 @@ export function JobDetailView({
                 <JobPreview
                     job={job as BoardJob}
                     match={match}
-                    resumeTitle={resumes?.[0]?.title}
+                    resumeTitle={primary?.title}
                     signedIn={Boolean(user)}
                     saved={saved}
                     onSave={user ? onSave : undefined}

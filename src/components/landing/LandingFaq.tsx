@@ -24,13 +24,13 @@ const FAQS = [
         value: "match",
         question: "What does the match percentage mean?",
         answer:
-            "It compares skills, seniority, and keywords on your latest resume to the posting. Higher scores mean more overlap — not a guarantee you will get the job.",
+            "It compares skills, seniority, and keywords on your matching resume to the posting. Higher scores mean more overlap — not a guarantee you will get the job.",
     },
     {
         value: "tailor",
         question: "What does tailor do?",
         answer:
-            "It rewrites your resume against that job description so the bullets and keywords line up with what the ATS will parse, without inventing experience.",
+            "It copies your matching resume and rewrites bullets and keywords for that posting. The original stays untouched, and nothing is invented.",
     },
     {
         value: "apply",

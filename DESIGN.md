@@ -40,7 +40,7 @@ Headlines use `{typography.heading.fontFamily}` at medium weight. Body and contr
 
 ## Layout
 
-Public pages share a sticky header, `min-h-svh` shell, and a skip link to `#main`. The landing hero is a split: offer on the left, example ranked shortlist on the right. Jobs stay a ranked list, not a search-first card grid. Signed-in chrome is shadcn Sidebar + Inset. Chat is assistant-ui Thread. Resume preview (Times New Roman paper) is a document artifact, not app chrome.
+Public pages share a sticky header, `min-h-svh` shell, and a skip link to `#main`. The landing hero is a split: offer on the left, example ranked shortlist on the right. Jobs stay a ranked list, not a search-first card grid. Signed-in chrome is shadcn Sidebar + Inset. Chat is assistant-ui Thread. A person has one matching resume (source of truth for ranking) and optional tailored copies per job. Tailored copies never become the matching resume. Resume studio is a split editor + Times New Roman paper; the paper is a document artifact, not app chrome. Matching resumes show structural readiness; ATS keyword fit is scored on a tailored copy against its posting.
 
 ## Shapes
 

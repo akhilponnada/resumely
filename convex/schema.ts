@@ -12,6 +12,14 @@ export default defineSchema({
     userId: v.string(),
     title: v.string(),
     rawInput: v.string(),
+    // "base" is the matching resume. "tailored" is a per-job copy.
+    // Optional so existing rows still validate; classify client/server-side.
+    kind: v.optional(v.union(v.literal("base"), v.literal("tailored"))),
+    parentId: v.optional(v.id("resumes")),
+    jobId: v.optional(v.id("jobs")),
+    targetCompany: v.optional(v.string()),
+    targetTitle: v.optional(v.string()),
+    isPrimary: v.optional(v.boolean()),
     jobDescription: v.optional(v.string()),
     atsScore: v.optional(v.number()),
     // Qualitative advice from the model.

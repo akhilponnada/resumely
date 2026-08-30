@@ -1,207 +1,166 @@
 "use client";
 
+import { type ReactNode } from "react";
+import { skillRows } from "@/lib/resume-model";
 import { ResumeData } from "@/lib/types";
 
+function href(value?: string) {
+    if (!value) return undefined;
+    return value.startsWith("http") ? value : `https://${value}`;
+}
+
+function range(start?: string, end?: string) {
+    if (!start && !end) return "";
+    return [start, end].filter(Boolean).join(" – ");
+}
+
 export function ResumePreview({ data }: { data: ResumeData }) {
-    const skills = data.skills;
+    const hasContact = Boolean(
+        data.phone || data.email || data.linkedin || data.github || data.website,
+    );
 
-    // A4 at 96 DPI = 794 x 1123 px
-    // Font sizes converted from pt to px (1pt ≈ 1.33px at 96dpi):
-    // - Name: 20pt = 27px
-    // - Section headers: 14pt = 19px
-    // - Body text: 11pt = 15px
-    // - Small text: 10pt = 13px
+    const skills = skillRows(data);
+
     return (
-        <div style={{
-            background: "#fff",
-            color: "#000",
-            padding: "48px",
-            fontFamily: 'Calibri, Arial, sans-serif',
-            fontSize: "15px",
-            lineHeight: 1.4,
-            width: "794px",
-            minHeight: "1123px",
-            boxSizing: "border-box",
-        }}>
-            {/* HEADER */}
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "16px" }}>
-                <div>
-                    <h1 style={{ fontSize: "27px", fontWeight: "bold", color: "#000", margin: "0 0 4px 0" }}>
-                        {data.fullName?.toUpperCase() || "FULL NAME"}
-                    </h1>
-                    {data.linkedin && (
-                        <a href={data.linkedin.startsWith("http") ? data.linkedin : `https://${data.linkedin}`}
-                            target="_blank" rel="noopener noreferrer"
-                            style={{ display: "block", color: "#2563eb", textDecoration: "underline", fontSize: "13px" }}>
-                            LinkedIn Profile
-                        </a>
-                    )}
-                    {data.github && (
-                        <a href={data.github.startsWith("http") ? data.github : `https://${data.github}`}
-                            target="_blank" rel="noopener noreferrer"
-                            style={{ display: "block", color: "#2563eb", textDecoration: "underline", fontSize: "13px" }}>
-                            GitHub Profile
-                        </a>
-                    )}
-                    {data.website && (
-                        <a href={data.website.startsWith("http") ? data.website : `https://${data.website}`}
-                            target="_blank" rel="noopener noreferrer"
-                            style={{ display: "block", color: "#2563eb", textDecoration: "underline", fontSize: "13px" }}>
-                            Portfolio
-                        </a>
-                    )}
-                </div>
-                <div style={{ textAlign: "right", fontSize: "13px" }}>
-                    {data.email && (
-                        <div><a href={`mailto:${data.email}`} style={{ color: "#2563eb", textDecoration: "underline" }}>{data.email}</a></div>
-                    )}
-                    {data.phone && <div style={{ marginTop: "2px" }}>{data.phone}</div>}
-                </div>
-            </div>
+        <article className="resume-preview">
+            <h1>{data.fullName || "Your name"}</h1>
+            {hasContact ? (
+                <p className="contact">
+                    {[
+                        data.phone ? <span key="phone">{data.phone}</span> : null,
+                        data.email ? (
+                            <a key="email" href={`mailto:${data.email}`}>{data.email}</a>
+                        ) : null,
+                        data.linkedin ? (
+                            <a key="linkedin" href={href(data.linkedin)} target="_blank" rel="noopener noreferrer">
+                                {data.linkedin.replace(/^https?:\/\//, "")}
+                            </a>
+                        ) : null,
+                        data.github ? (
+                            <a key="github" href={href(data.github)} target="_blank" rel="noopener noreferrer">
+                                {data.github.replace(/^https?:\/\//, "")}
+                            </a>
+                        ) : null,
+                        data.website ? (
+                            <a key="website" href={href(data.website)} target="_blank" rel="noopener noreferrer">
+                                {data.website.replace(/^https?:\/\//, "")}
+                            </a>
+                        ) : null,
+                    ]
+                        .filter(Boolean)
+                        .reduce<ReactNode[]>((parts, node, index) => {
+                            if (index > 0) parts.push(" | ");
+                            parts.push(node);
+                            return parts;
+                        }, [])}
+                </p>
+            ) : null}
 
-            {/* SUMMARY */}
-            {data.summary && (
-                <section style={{ marginBottom: "14px" }}>
-                    <h2 style={{ fontSize: "19px", fontWeight: "bold", textAlign: "center", margin: "0 0 8px", paddingBottom: "4px", borderBottom: "2px solid #333" }}>
-                        PROFESSIONAL SUMMARY
-                    </h2>
-                    <p style={{ fontSize: "15px", textAlign: "justify", margin: 0 }}>{data.summary}</p>
-                </section>
-            )}
-
-            {/* EDUCATION */}
-            {data.education && data.education.length > 0 && (
-                <section style={{ marginBottom: "14px" }}>
-                    <h2 style={{ fontSize: "19px", fontWeight: "bold", textAlign: "center", margin: "0 0 8px", paddingBottom: "4px", borderBottom: "2px solid #333" }}>
-                        EDUCATION
-                    </h2>
-                    {data.education.map((edu, i) => (
-                        <div key={i} style={{ display: "flex", justifyContent: "space-between", marginBottom: "6px" }}>
-                            <div>
-                                <div style={{ fontWeight: "bold", fontSize: "15px" }}>{edu.institution}</div>
-                                <div style={{ fontStyle: "italic", fontSize: "14px" }}>
-                                    {edu.degree}{edu.gpa && ` | GPA: ${edu.gpa}`}
-                                </div>
-                            </div>
-                            <div style={{ textAlign: "right", fontSize: "14px" }}>
-                                {edu.location && <div>{edu.location}</div>}
-                                <div>{edu.startDate} - {edu.endDate}</div>
-                            </div>
-                        </div>
-                    ))}
-                </section>
-            )}
-
-            {/* SKILLS */}
-            {skills && (
-                <section style={{ marginBottom: "14px" }}>
-                    <h2 style={{ fontSize: "19px", fontWeight: "bold", textAlign: "center", margin: "0 0 8px", paddingBottom: "4px", borderBottom: "2px solid #333" }}>
-                        SKILLS
-                    </h2>
-                    <div>
-                        {skills.languages && skills.languages.length > 0 && (
-                            <div style={{ fontSize: "14px", marginBottom: "3px" }}><strong>Languages:</strong> {skills.languages.join(", ")}</div>
-                        )}
-                        {skills.frameworks && skills.frameworks.length > 0 && (
-                            <div style={{ fontSize: "14px", marginBottom: "3px" }}><strong>Frameworks:</strong> {skills.frameworks.join(", ")}</div>
-                        )}
-                        {skills.tools && skills.tools.length > 0 && (
-                            <div style={{ fontSize: "14px", marginBottom: "3px" }}><strong>Tools:</strong> {skills.tools.join(", ")}</div>
-                        )}
-                        {((skills.libraries && skills.libraries.length > 0) || (skills.platforms && skills.platforms.length > 0)) && (
-                            <div style={{ fontSize: "14px", marginBottom: "3px" }}><strong>Platforms:</strong> {[...(skills.libraries || []), ...(skills.platforms || [])].join(", ")}</div>
-                        )}
-                        {skills.soft && skills.soft.length > 0 && (
-                            <div style={{ fontSize: "14px", marginBottom: "3px" }}><strong>Soft Skills:</strong> {skills.soft.join(", ")}</div>
-                        )}
-                    </div>
-                </section>
-            )}
-
-            {/* WORK EXPERIENCE */}
-            {data.experience && data.experience.length > 0 && (
-                <section style={{ marginBottom: "14px" }}>
-                    <h2 style={{ fontSize: "19px", fontWeight: "bold", textAlign: "center", margin: "0 0 8px", paddingBottom: "4px", borderBottom: "2px solid #333" }}>
-                        WORK EXPERIENCE
-                    </h2>
-                    {data.experience.map((exp, i) => (
-                        <div key={i} style={{ marginBottom: "12px" }}>
-                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
-                                <div style={{ fontWeight: "bold", fontSize: "15px" }}>
-                                    {exp.position} | {exp.company}
-                                    {exp.link && (
-                                        <a href={exp.link.startsWith("http") ? exp.link : `https://${exp.link}`}
-                                            target="_blank" rel="noopener noreferrer"
-                                            style={{ color: "#2563eb", marginLeft: "6px", fontWeight: "normal", fontSize: "13px" }}>[Link]</a>
-                                    )}
-                                </div>
-                                <span style={{ fontSize: "14px" }}>{exp.startDate} - {exp.endDate}</span>
-                            </div>
-                            {exp.location && <div style={{ fontSize: "14px", fontStyle: "italic", color: "#444" }}>{exp.location}</div>}
-                            <ul style={{ margin: "4px 0 0 0", paddingLeft: "20px" }}>
-                                {exp.highlights?.map((h, j) => (
-                                    <li key={j} style={{ fontSize: "14px", marginBottom: "2px" }}>{h}</li>
-                                ))}
-                            </ul>
-                        </div>
-                    ))}
-                </section>
-            )}
-
-            {/* PROJECTS */}
-            {data.projects && data.projects.length > 0 && (
-                <section style={{ marginBottom: "14px" }}>
-                    <h2 style={{ fontSize: "19px", fontWeight: "bold", textAlign: "center", margin: "0 0 8px", paddingBottom: "4px", borderBottom: "2px solid #333" }}>
-                        PROJECTS
-                    </h2>
-                    {data.projects.map((proj, i) => (
-                        <div key={i} style={{ marginBottom: "12px" }}>
-                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
-                                <div style={{ fontWeight: "bold", fontSize: "15px" }}>
-                                    {proj.name}
-                                    {proj.technologies && <span style={{ fontWeight: "normal", fontSize: "14px", color: "#444" }}> | {proj.technologies}</span>}
-                                    {proj.link && (
-                                        <a href={proj.link.startsWith("http") ? proj.link : `https://${proj.link}`}
-                                            target="_blank" rel="noopener noreferrer"
-                                            style={{ color: "#2563eb", marginLeft: "6px", fontWeight: "normal", fontSize: "13px" }}>[Link]</a>
-                                    )}
-                                </div>
-                                {(proj.startDate || proj.endDate) && <span style={{ fontSize: "14px" }}>{proj.startDate} - {proj.endDate}</span>}
-                            </div>
-                            <ul style={{ margin: "4px 0 0 0", paddingLeft: "20px" }}>
-                                {proj.highlights?.map((h, j) => (
-                                    <li key={j} style={{ fontSize: "14px", marginBottom: "2px" }}>{h}</li>
-                                ))}
-                            </ul>
-                        </div>
-                    ))}
-                </section>
-            )}
-
-            {/* CERTIFICATIONS */}
-            {data.certifications && data.certifications.length > 0 && (
+            {data.summary ? (
                 <section>
-                    <h2 style={{ fontSize: "19px", fontWeight: "bold", textAlign: "center", margin: "0 0 8px", paddingBottom: "4px", borderBottom: "2px solid #333" }}>
-                        CERTIFICATIONS
-                    </h2>
-                    {data.certifications.map((cert, i) => (
-                        <div key={i} style={{ marginBottom: "8px" }}>
-                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
-                                <div style={{ fontWeight: "bold", fontSize: "15px" }}>
-                                    {cert.name}
-                                    {cert.issuer && <span style={{ fontWeight: "normal" }}> ({cert.issuer})</span>}
-                                    {cert.link && (
-                                        <a href={cert.link.startsWith("http") ? cert.link : `https://${cert.link}`}
-                                            target="_blank" rel="noopener noreferrer"
-                                            style={{ color: "#2563eb", marginLeft: "6px", fontWeight: "normal", fontSize: "13px" }}>[View]</a>
-                                    )}
-                                </div>
-                                {cert.date && <span style={{ fontSize: "14px" }}>{cert.date}</span>}
+                    <h2>Summary</h2>
+                    <p>{data.summary}</p>
+                </section>
+            ) : null}
+
+            {data.experience?.length ? (
+                <section>
+                    <h2>Experience</h2>
+                    {data.experience.map((exp, i) => (
+                        <div className="entry" key={`${exp.company}-${i}`}>
+                            <div className="entry-header">
+                                <span className="entry-title">{exp.position}</span>
+                                <span className="entry-date">{range(exp.startDate, exp.endDate)}</span>
+                            </div>
+                            <div className="entry-sub">
+                                {exp.company}
+                                {exp.location ? `, ${exp.location}` : ""}
+                            </div>
+                            {exp.highlights?.filter(Boolean).length ? (
+                                <ul>
+                                    {exp.highlights.filter(Boolean).map((h, j) => (
+                                        <li key={j}>{h}</li>
+                                    ))}
+                                </ul>
+                            ) : null}
+                        </div>
+                    ))}
+                </section>
+            ) : null}
+
+            {data.projects?.length ? (
+                <section>
+                    <h2>Projects</h2>
+                    {data.projects.map((project, i) => (
+                        <div className="entry" key={`${project.name}-${i}`}>
+                            <div className="entry-header">
+                                <span className="entry-title">
+                                    {project.name}
+                                    {project.technologies ? ` | ${project.technologies}` : ""}
+                                </span>
+                                <span className="entry-date">{range(project.startDate, project.endDate)}</span>
+                            </div>
+                            {project.highlights?.filter(Boolean).length ? (
+                                <ul>
+                                    {project.highlights.filter(Boolean).map((h, j) => (
+                                        <li key={j}>{h}</li>
+                                    ))}
+                                </ul>
+                            ) : null}
+                        </div>
+                    ))}
+                </section>
+            ) : null}
+
+            {skills.length ? (
+                <section>
+                    <h2>Technical skills</h2>
+                    {skills.map((field) => (
+                        <p className="skills-row" key={field.key}>
+                            <strong>{field.label}: </strong>
+                            {field.values.join(", ")}
+                        </p>
+                    ))}
+                </section>
+            ) : null}
+
+            {data.education?.length ? (
+                <section>
+                    <h2>Education</h2>
+                    {data.education.map((edu, i) => (
+                        <div className="entry" key={`${edu.institution}-${i}`}>
+                            <div className="entry-header">
+                                <span className="entry-title">{edu.institution}</span>
+                                <span className="entry-date">{edu.location}</span>
+                            </div>
+                            <div className="entry-sub">
+                                {edu.degree}
+                                {edu.gpa ? `; GPA: ${edu.gpa}` : ""}
+                                {edu.startDate || edu.endDate
+                                    ? ` · ${range(edu.startDate, edu.endDate)}`
+                                    : ""}
                             </div>
                         </div>
                     ))}
                 </section>
-            )}
-        </div>
+            ) : null}
+
+            {data.certifications?.length ? (
+                <section>
+                    <h2>Certifications</h2>
+                    {data.certifications.map((cert, i) => (
+                        <div className="entry" key={`${cert.name}-${i}`}>
+                            <div className="entry-header">
+                                <span className="entry-title">
+                                    {cert.name}
+                                    {cert.issuer ? ` | ${cert.issuer}` : ""}
+                                </span>
+                                <span className="entry-date">{cert.date}</span>
+                            </div>
+                        </div>
+                    ))}
+                </section>
+            ) : null}
+        </article>
     );
 }

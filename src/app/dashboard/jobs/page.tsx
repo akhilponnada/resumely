@@ -9,7 +9,7 @@ import { api } from "../../../../convex/_generated/api";
 import { JobsBoard } from "@/components/jobs/JobsBoard";
 import { StatCard } from "@/components/jobs/MarketPulse";
 import { QuietErrorBoundary } from "@/components/jobs/QuietErrorBoundary";
-import { countSkills } from "@/lib/jobMatch";
+import { pickPrimary, skillCount } from "@/lib/resume-model";
 import type { ResumeData } from "@/lib/types";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
@@ -20,9 +20,10 @@ export default function DashboardJobsPage() {
     const { user } = useUser();
     const saved = useQuery(api.jobs.listSaved, user?.id ? {} : "skip");
     const resumes = useQuery(api.resumes.getResumesByUser, user?.id ? {} : "skip");
-    const latest = resumes?.[0]?.resumeData as ResumeData | undefined;
+    const primary = pickPrimary(resumes);
+    const matchResume = primary?.resumeData as ResumeData | undefined;
 
-    const skills = useMemo(() => countSkills(latest), [latest]);
+    const skills = useMemo(() => skillCount(matchResume), [matchResume]);
     const firstName = user?.firstName ?? "there";
 
     return (
@@ -32,14 +33,14 @@ export default function DashboardJobsPage() {
                     Welcome back, {firstName}
                 </h1>
                 <p className="text-pretty text-muted-foreground">
-                    {latest
-                        ? `Ranked against ${resumes?.[0]?.title ?? "your latest resume"}.`
-                        : "Upload a resume to rank every live role against your skills."}
+                    {matchResume
+                        ? `Ranked against ${primary?.title ?? "your matching resume"}.`
+                        : "Add a matching resume to rank every live role against your skills."}
                 </p>
-                {!latest ? (
+                {!matchResume ? (
                     <div className="pt-1">
                         <Button nativeButton={false} render={<Link href="/dashboard/new" />} size="sm">
-                            Create a resume
+                            Add resume
                         </Button>
                     </div>
                 ) : null}
@@ -106,7 +107,7 @@ function DashboardStats({
             <StatCard
                 label="Skills"
                 value={skillCount.toLocaleString()}
-                hint="From your latest resume"
+                hint="From your matching resume"
             />
             <StatCard
                 label="Resumes"

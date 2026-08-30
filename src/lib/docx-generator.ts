@@ -1,421 +1,253 @@
 import {
-    Document,
-    Paragraph,
-    TextRun,
-    Table,
-    TableRow,
-    TableCell,
-    WidthType,
     AlignmentType,
     BorderStyle,
-    Packer,
+    Document,
     ExternalHyperlink,
-    convertInchesToTwip,
+    Packer,
+    Paragraph,
+    TextRun,
 } from "docx";
+import { skillRows } from "./resume-model";
 import { ResumeData } from "./types";
 
-// =============================================================================
-// DOCX RESUME GENERATOR - Hardcoded template matching reference exactly
-// =============================================================================
+const FONT = "Times New Roman";
+const NAME = 44;
+const SECTION = 22;
+const BODY = 20;
+const SMALL = 18;
 
-// Colors matching the reference template exactly
-const LINK_COLOR = "2563EB";
-const SECTION_LINE_COLOR = "808080";
-const TEXT_COLOR = "000000";
+const sectionBorder = {
+    bottom: { style: BorderStyle.SINGLE, size: 6, color: "000000", space: 1 },
+};
 
-// Font configuration - Calibri matches the reference template
-// DOCX uses half-points: multiply pt by 2 (e.g., 11pt = 22)
-// Standard resume fonts: Name 18-22pt, Headers 14-16pt, Body 10-12pt
-const FONT = "Calibri";
-const FONT_SIZE_NAME = 40;      // 20pt for name
-const FONT_SIZE_SECTION = 28;   // 14pt for section headers
-const FONT_SIZE_NORMAL = 22;    // 11pt for body text
-const FONT_SIZE_SMALL = 20;     // 10pt for small text
+function run(
+    text: string,
+    opts: { bold?: boolean; italics?: boolean; size?: number } = {},
+) {
+    return new TextRun({
+        text,
+        font: FONT,
+        size: opts.size ?? BODY,
+        bold: opts.bold,
+        italics: opts.italics,
+    });
+}
 
-// Border helpers
-const noBorder = { style: BorderStyle.NONE, size: 0, color: "FFFFFF" };
-const noBorders = { top: noBorder, bottom: noBorder, left: noBorder, right: noBorder };
+function heading(text: string) {
+    return new Paragraph({
+        spacing: { before: 200, after: 60 },
+        border: sectionBorder,
+        children: [run(text.toUpperCase(), { bold: true, size: SECTION })],
+    });
+}
+
+function linkRun(label: string, url: string) {
+    const href = url.startsWith("http") ? url : `https://${url}`;
+    return new ExternalHyperlink({
+        link: href,
+        children: [run(label)],
+    });
+}
 
 export async function generateDOCX(data: ResumeData): Promise<Blob> {
-    const children: (Paragraph | Table)[] = [];
+    const children: Paragraph[] = [];
 
-    // === HEADER ===
-    const nameParts = (data.fullName || "").split(" ");
-    const lastName = nameParts[nameParts.length - 1] || "Name";
-    const githubUsername = data.github
-        ? data.github.replace(/^https?:\/\//, "").replace("github.com/", "").split("/")[0]
-        : "";
+    children.push(
+        new Paragraph({
+            alignment: AlignmentType.CENTER,
+            spacing: { after: 40 },
+            children: [run((data.fullName || "YOUR NAME").toUpperCase(), { bold: true, size: NAME })],
+        }),
+    );
 
-    const headerTable = new Table({
-        width: { size: 100, type: WidthType.PERCENTAGE },
-        borders: {
-            top: noBorder, bottom: noBorder, left: noBorder, right: noBorder,
-            insideHorizontal: noBorder, insideVertical: noBorder,
-        },
-        rows: [
-            new TableRow({
-                children: [
-                    new TableCell({
-                        width: { size: 60, type: WidthType.PERCENTAGE },
-                        borders: noBorders,
-                        children: [
-                            new Paragraph({
-                                spacing: { after: 40 },
-                                children: [
-                                    new TextRun({
-                                        text: (data.fullName || "FULL NAME").toUpperCase(),
-                                        bold: true,
-                                        size: FONT_SIZE_NAME,
-                                        font: FONT,
-                                        color: TEXT_COLOR,
-                                    }),
-                                ],
-                            }),
-                            ...(data.linkedin ? [
-                                new Paragraph({
-                                    spacing: { after: 20 },
-                                    children: [
-                                        new ExternalHyperlink({
-                                            link: data.linkedin.startsWith("http") ? data.linkedin : `https://${data.linkedin}`,
-                                            children: [
-                                                new TextRun({
-                                                    text: `${lastName} | LinkedIn`,
-                                                    color: LINK_COLOR,
-                                                    underline: {},
-                                                    size: FONT_SIZE_NORMAL,
-                                                    font: FONT,
-                                                }),
-                                            ],
-                                        }),
-                                    ],
-                                }),
-                            ] : []),
-                            ...(data.github ? [
-                                new Paragraph({
-                                    children: [
-                                        new ExternalHyperlink({
-                                            link: data.github.startsWith("http") ? data.github : `https://${data.github}`,
-                                            children: [
-                                                new TextRun({
-                                                    text: `${githubUsername} (github.com)`,
-                                                    color: LINK_COLOR,
-                                                    underline: {},
-                                                    size: FONT_SIZE_NORMAL,
-                                                    font: FONT,
-                                                }),
-                                            ],
-                                        }),
-                                    ],
-                                }),
-                            ] : []),
-                        ],
-                    }),
-                    new TableCell({
-                        width: { size: 40, type: WidthType.PERCENTAGE },
-                        borders: noBorders,
-                        children: [
-                            ...(data.email ? [
-                                new Paragraph({
-                                    alignment: AlignmentType.RIGHT,
-                                    spacing: { after: 40 },
-                                    children: [
-                                        new TextRun({ text: "Email: ", size: FONT_SIZE_NORMAL, font: FONT, color: TEXT_COLOR }),
-                                        new ExternalHyperlink({
-                                            link: `mailto:${data.email}`,
-                                            children: [
-                                                new TextRun({
-                                                    text: data.email,
-                                                    color: LINK_COLOR,
-                                                    underline: {},
-                                                    size: FONT_SIZE_NORMAL,
-                                                    font: FONT,
-                                                }),
-                                            ],
-                                        }),
-                                    ],
-                                }),
-                            ] : []),
-                            ...(data.phone ? [
-                                new Paragraph({
-                                    alignment: AlignmentType.RIGHT,
-                                    children: [
-                                        new TextRun({ text: `Mobile: ${data.phone}`, size: FONT_SIZE_NORMAL, font: FONT, color: TEXT_COLOR }),
-                                    ],
-                                }),
-                            ] : []),
-                        ],
-                    }),
-                ],
+    const contactChildren: (TextRun | ExternalHyperlink)[] = [];
+    const pushSep = () => {
+        if (contactChildren.length) contactChildren.push(run(" | "));
+    };
+    if (data.phone) {
+        pushSep();
+        contactChildren.push(run(data.phone, { size: SMALL }));
+    }
+    if (data.email) {
+        pushSep();
+        contactChildren.push(
+            new ExternalHyperlink({
+                link: `mailto:${data.email}`,
+                children: [run(data.email, { size: SMALL })],
             }),
-        ],
-    });
-    children.push(headerTable);
-
-    // Section header helper
-    const addSectionHeader = (title: string) => {
+        );
+    }
+    if (data.linkedin) {
+        pushSep();
+        contactChildren.push(linkRun(data.linkedin.replace(/^https?:\/\//, ""), data.linkedin));
+    }
+    if (data.github) {
+        pushSep();
+        contactChildren.push(linkRun(data.github.replace(/^https?:\/\//, ""), data.github));
+    }
+    if (data.website) {
+        pushSep();
+        contactChildren.push(linkRun(data.website.replace(/^https?:\/\//, ""), data.website));
+    }
+    if (contactChildren.length) {
         children.push(
             new Paragraph({
-                children: [new TextRun({ text: title, bold: true, size: FONT_SIZE_SECTION, font: FONT, color: TEXT_COLOR })],
                 alignment: AlignmentType.CENTER,
-                border: { bottom: { color: SECTION_LINE_COLOR, space: 1, size: 6, style: BorderStyle.SINGLE } },
-                spacing: { before: 180, after: 80 },
-            })
+                spacing: { after: 160 },
+                children: contactChildren,
+            }),
         );
-    };
+    }
 
-    // === EDUCATION ===
-    if (data.education && data.education.length > 0) {
-        addSectionHeader("EDUCATION");
-        for (const edu of data.education) {
+    if (data.summary) {
+        children.push(heading("Summary"));
+        children.push(new Paragraph({ spacing: { after: 80 }, children: [run(data.summary, { size: SMALL })] }));
+    }
+
+    if (data.experience?.length) {
+        children.push(heading("Experience"));
+        for (const exp of data.experience) {
             children.push(
-                new Table({
-                    width: { size: 100, type: WidthType.PERCENTAGE },
-                    borders: { top: noBorder, bottom: noBorder, left: noBorder, right: noBorder, insideHorizontal: noBorder, insideVertical: noBorder },
-                    rows: [
-                        new TableRow({
-                            children: [
-                                new TableCell({
-                                    width: { size: 65, type: WidthType.PERCENTAGE },
-                                    borders: noBorders,
-                                    children: [new Paragraph({ children: [new TextRun({ text: edu.institution, bold: true, size: FONT_SIZE_SECTION, font: FONT, color: TEXT_COLOR })] })],
-                                }),
-                                new TableCell({
-                                    width: { size: 35, type: WidthType.PERCENTAGE },
-                                    borders: noBorders,
-                                    children: [new Paragraph({ alignment: AlignmentType.RIGHT, children: [new TextRun({ text: edu.location || "", bold: true, size: FONT_SIZE_NORMAL, font: FONT, color: TEXT_COLOR })] })],
-                                }),
-                            ],
-                        }),
-                        new TableRow({
-                            children: [
-                                new TableCell({
-                                    width: { size: 65, type: WidthType.PERCENTAGE },
-                                    borders: noBorders,
-                                    children: [new Paragraph({ children: [new TextRun({ text: edu.gpa ? `${edu.degree}; GPA: ${edu.gpa}` : edu.degree, italics: true, size: FONT_SIZE_NORMAL, font: FONT, color: TEXT_COLOR })] })],
-                                }),
-                                new TableCell({
-                                    width: { size: 35, type: WidthType.PERCENTAGE },
-                                    borders: noBorders,
-                                    children: [new Paragraph({ alignment: AlignmentType.RIGHT, children: [new TextRun({ text: `${edu.startDate || ""} - ${edu.endDate || ""}`, bold: true, size: FONT_SIZE_NORMAL, font: FONT, color: TEXT_COLOR })] })],
-                                }),
-                            ],
-                        }),
+                new Paragraph({
+                    spacing: { before: 80 },
+                    children: [
+                        run(exp.position, { bold: true }),
+                        run(
+                            `  ${[exp.startDate, exp.endDate].filter(Boolean).join(" – ")}`,
+                            { italics: true, size: SMALL },
+                        ),
                     ],
                 }),
-                new Paragraph({ spacing: { after: 40 } })
             );
-        }
-    }
-
-    // === SKILLS SUMMARY ===
-    if (data.skills) {
-        const skillItems: { label: string; items: string[] }[] = [];
-        if (data.skills.languages?.length) skillItems.push({ label: "Languages", items: data.skills.languages });
-        if (data.skills.frameworks?.length) skillItems.push({ label: "Frameworks", items: data.skills.frameworks });
-        if (data.skills.tools?.length) skillItems.push({ label: "Tools", items: data.skills.tools });
-        if (data.skills.platforms?.length) skillItems.push({ label: "Platforms", items: data.skills.platforms });
-        if (data.skills.soft?.length) skillItems.push({ label: "Soft Skills", items: data.skills.soft });
-
-        if (skillItems.length > 0) {
-            addSectionHeader("SKILLS SUMMARY");
-            for (const { label, items } of skillItems) {
+            children.push(
+                new Paragraph({
+                    spacing: { after: 40 },
+                    children: [
+                        run(
+                            [exp.company, exp.location].filter(Boolean).join(", "),
+                            { italics: true, size: SMALL },
+                        ),
+                    ],
+                }),
+            );
+            for (const highlight of (exp.highlights ?? []).filter((h) => h.trim())) {
                 children.push(
                     new Paragraph({
-                        children: [
-                            new TextRun({ text: "●  ", size: FONT_SIZE_SMALL, font: FONT, color: TEXT_COLOR }),
-                            new TextRun({ text: `${label}: `, bold: true, size: FONT_SIZE_NORMAL, font: FONT, color: TEXT_COLOR }),
-                            new TextRun({ text: items.join(", "), size: FONT_SIZE_NORMAL, font: FONT, color: TEXT_COLOR }),
-                        ],
-                        indent: { left: convertInchesToTwip(0.15) },
+                        indent: { left: 200 },
                         spacing: { after: 40 },
-                    })
+                        children: [run(`• ${highlight}`, { size: SMALL })],
+                    }),
                 );
             }
         }
     }
 
-    // === WORK EXPERIENCE ===
-    if (data.experience && data.experience.length > 0) {
-        addSectionHeader("WORK EXPERIENCE");
-        for (const exp of data.experience) {
-            const expHeaderChildren: (TextRun | ExternalHyperlink)[] = [
-                new TextRun({ text: `${exp.position.toUpperCase()} | ${exp.company.toUpperCase()}`, bold: true, size: FONT_SIZE_SECTION, font: FONT, color: TEXT_COLOR }),
-            ];
-            // Only add link if one exists
-            if (exp.link && exp.link.trim()) {
-                expHeaderChildren.push(new TextRun({ text: " | ", bold: true, size: FONT_SIZE_SECTION, font: FONT, color: TEXT_COLOR }));
-                expHeaderChildren.push(
-                    new ExternalHyperlink({
-                        link: exp.link.startsWith("http") ? exp.link : `https://${exp.link}`,
-                        children: [new TextRun({ text: "LINK", bold: true, color: LINK_COLOR, size: FONT_SIZE_SECTION, font: FONT })],
-                    }) as unknown as TextRun
-                );
-            }
-
+    if (data.projects?.length) {
+        children.push(heading("Projects"));
+        for (const project of data.projects) {
+            const title = project.technologies
+                ? `${project.name} | ${project.technologies}`
+                : project.name;
             children.push(
-                new Table({
-                    width: { size: 100, type: WidthType.PERCENTAGE },
-                    borders: { top: noBorder, bottom: noBorder, left: noBorder, right: noBorder, insideHorizontal: noBorder, insideVertical: noBorder },
-                    rows: [
-                        new TableRow({
-                            children: [
-                                new TableCell({
-                                    width: { size: 70, type: WidthType.PERCENTAGE },
-                                    borders: noBorders,
-                                    children: [new Paragraph({ children: expHeaderChildren })],
-                                }),
-                                new TableCell({
-                                    width: { size: 30, type: WidthType.PERCENTAGE },
-                                    borders: noBorders,
-                                    children: [new Paragraph({ alignment: AlignmentType.RIGHT, children: [new TextRun({ text: `${exp.startDate || ""} - ${exp.endDate || ""}`, bold: true, size: FONT_SIZE_NORMAL, font: FONT, color: TEXT_COLOR })] })],
-                                }),
-                            ],
-                        }),
+                new Paragraph({
+                    spacing: { before: 80 },
+                    children: [
+                        run(title, { bold: true }),
+                        run(
+                            `  ${[project.startDate, project.endDate].filter(Boolean).join(" – ")}`,
+                            { italics: true, size: SMALL },
+                        ),
                     ],
-                })
+                }),
             );
-
-            for (const highlight of exp.highlights || []) {
+            for (const highlight of (project.highlights ?? []).filter((h) => h.trim())) {
                 children.push(
                     new Paragraph({
-                        children: [new TextRun({ text: `•  ${highlight}`, size: FONT_SIZE_NORMAL, font: FONT, color: TEXT_COLOR })],
-                        indent: { left: convertInchesToTwip(0.2) },
-                        spacing: { after: 30 },
-                    })
+                        indent: { left: 200 },
+                        spacing: { after: 40 },
+                        children: [run(`• ${highlight}`, { size: SMALL })],
+                    }),
                 );
             }
-            children.push(new Paragraph({ spacing: { after: 60 } }));
         }
     }
 
-    // === PROJECTS ===
-    if (data.projects && data.projects.length > 0) {
-        addSectionHeader("PROJECTS");
-        for (const proj of data.projects) {
-            const projHeaderChildren: (TextRun | ExternalHyperlink)[] = [
-                new TextRun({ text: proj.name, bold: true, size: FONT_SIZE_SECTION, font: FONT, color: TEXT_COLOR }),
-            ];
-            // Only add link if one exists
-            if (proj.link && proj.link.trim()) {
-                projHeaderChildren.push(new TextRun({ text: " | ", bold: true, size: FONT_SIZE_SECTION, font: FONT, color: TEXT_COLOR }));
-                projHeaderChildren.push(
-                    new ExternalHyperlink({
-                        link: proj.link.startsWith("http") ? proj.link : `https://${proj.link}`,
-                        children: [new TextRun({ text: "LINK", bold: true, color: LINK_COLOR, size: FONT_SIZE_SECTION, font: FONT })],
-                    }) as unknown as TextRun
-                );
-            }
-
+    const presentSkills = skillRows(data);
+    if (presentSkills.length) {
+        children.push(heading("Technical Skills"));
+        for (const row of presentSkills) {
             children.push(
-                new Table({
-                    width: { size: 100, type: WidthType.PERCENTAGE },
-                    borders: { top: noBorder, bottom: noBorder, left: noBorder, right: noBorder, insideHorizontal: noBorder, insideVertical: noBorder },
-                    rows: [
-                        new TableRow({
-                            children: [
-                                new TableCell({
-                                    width: { size: 70, type: WidthType.PERCENTAGE },
-                                    borders: noBorders,
-                                    children: [new Paragraph({ children: projHeaderChildren })],
-                                }),
-                                new TableCell({
-                                    width: { size: 30, type: WidthType.PERCENTAGE },
-                                    borders: noBorders,
-                                    children: [new Paragraph({ alignment: AlignmentType.RIGHT, children: [new TextRun({ text: proj.startDate || proj.endDate ? `${proj.startDate || ""} - ${proj.endDate || ""}` : "", bold: true, size: FONT_SIZE_NORMAL, font: FONT, color: TEXT_COLOR })] })],
-                                }),
-                            ],
-                        }),
+                new Paragraph({
+                    spacing: { after: 40 },
+                    children: [
+                        run(`${row.label}: `, { bold: true, size: SMALL }),
+                        run(row.values.join(", "), { size: SMALL }),
                     ],
-                })
+                }),
             );
-
-            for (const highlight of proj.highlights || []) {
-                children.push(
-                    new Paragraph({
-                        children: [new TextRun({ text: `•  ${highlight}`, size: FONT_SIZE_NORMAL, font: FONT, color: TEXT_COLOR })],
-                        indent: { left: convertInchesToTwip(0.2) },
-                        spacing: { after: 30 },
-                    })
-                );
-            }
-            children.push(new Paragraph({ spacing: { after: 60 } }));
         }
     }
 
-    // === CERTIFICATES ===
-    if (data.certifications && data.certifications.length > 0) {
-        addSectionHeader("CERTIFICATES");
+    if (data.education?.length) {
+        children.push(heading("Education"));
+        for (const edu of data.education) {
+            children.push(
+                new Paragraph({
+                    spacing: { before: 80 },
+                    children: [
+                        run(edu.institution, { bold: true }),
+                        run(edu.location ? `  ${edu.location}` : "", { size: SMALL }),
+                    ],
+                }),
+            );
+            children.push(
+                new Paragraph({
+                    spacing: { after: 40 },
+                    children: [
+                        run(
+                            edu.gpa ? `${edu.degree}; GPA: ${edu.gpa}` : edu.degree,
+                            { italics: true, size: SMALL },
+                        ),
+                        run(
+                            `  ${[edu.startDate, edu.endDate].filter(Boolean).join(" – ")}`,
+                            { italics: true, size: SMALL },
+                        ),
+                    ],
+                }),
+            );
+        }
+    }
+
+    if (data.certifications?.length) {
+        children.push(heading("Certifications"));
         for (const cert of data.certifications) {
-            const namePart = cert.issuer ? `${cert.name} (${cert.issuer})` : cert.name;
-            const certHeaderChildren: (TextRun | ExternalHyperlink)[] = [
-                new TextRun({ text: namePart, bold: true, size: FONT_SIZE_SECTION, font: FONT, color: TEXT_COLOR }),
-            ];
-            // Only add certificate link if one exists
-            if (cert.link && cert.link.trim()) {
-                certHeaderChildren.push(new TextRun({ text: " | ", bold: true, size: FONT_SIZE_SECTION, font: FONT, color: TEXT_COLOR }));
-                certHeaderChildren.push(
-                    new ExternalHyperlink({
-                        link: cert.link.startsWith("http") ? cert.link : `https://${cert.link}`,
-                        children: [new TextRun({ text: "VIEW", bold: true, color: LINK_COLOR, size: FONT_SIZE_SECTION, font: FONT })],
-                    }) as unknown as TextRun
-                );
-            }
-
             children.push(
-                new Table({
-                    width: { size: 100, type: WidthType.PERCENTAGE },
-                    borders: { top: noBorder, bottom: noBorder, left: noBorder, right: noBorder, insideHorizontal: noBorder, insideVertical: noBorder },
-                    rows: [
-                        new TableRow({
-                            children: [
-                                new TableCell({
-                                    width: { size: 70, type: WidthType.PERCENTAGE },
-                                    borders: noBorders,
-                                    children: [new Paragraph({ children: certHeaderChildren })],
-                                }),
-                                new TableCell({
-                                    width: { size: 30, type: WidthType.PERCENTAGE },
-                                    borders: noBorders,
-                                    children: [new Paragraph({ alignment: AlignmentType.RIGHT, children: [new TextRun({ text: cert.date || "", bold: true, size: FONT_SIZE_NORMAL, font: FONT, color: TEXT_COLOR })] })],
-                                }),
-                            ],
-                        }),
+                new Paragraph({
+                    spacing: { after: 40 },
+                    children: [
+                        run(
+                            cert.issuer ? `${cert.name} | ${cert.issuer}` : cert.name,
+                            { bold: true },
+                        ),
+                        run(cert.date ? `  ${cert.date}` : "", { italics: true, size: SMALL }),
                     ],
-                })
+                }),
             );
-
-            const certWithHighlights = cert as { highlights?: string[] };
-            if (certWithHighlights.highlights && certWithHighlights.highlights.length > 0) {
-                for (const highlight of certWithHighlights.highlights) {
-                    children.push(
-                        new Paragraph({
-                            children: [new TextRun({ text: `•  ${highlight}`, size: FONT_SIZE_NORMAL, font: FONT, color: TEXT_COLOR })],
-                            indent: { left: convertInchesToTwip(0.2) },
-                            spacing: { after: 30 },
-                        })
-                    );
-                }
-            }
-            children.push(new Paragraph({ spacing: { after: 40 } }));
         }
     }
 
-    // Create document
     const doc = new Document({
-        sections: [{
-            properties: {
-                page: {
-                    margin: {
-                        top: convertInchesToTwip(0.5),
-                        right: convertInchesToTwip(0.5),
-                        bottom: convertInchesToTwip(0.5),
-                        left: convertInchesToTwip(0.5),
+        sections: [
+            {
+                properties: {
+                    page: {
+                        margin: { top: 720, bottom: 720, left: 720, right: 720 },
                     },
                 },
+                children,
             },
-            children,
-        }],
+        ],
     });
 
-    return await Packer.toBlob(doc);
+    return Packer.toBlob(doc);
 }

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { generateDOCX } from "@/lib/docx-generator";
+import { sanitizeResumeData } from "@/lib/resume-model";
 import { ResumeData } from "@/lib/types";
 
 export const maxDuration = 60;
@@ -50,8 +51,7 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: "Resume data is required" }, { status: 400 });
         }
 
-        // Generate DOCX using Claude Opus
-        const blob = await generateDOCX(resumeData as ResumeData);
+        const blob = await generateDOCX(sanitizeResumeData(resumeData as ResumeData));
 
         // Convert blob to buffer
         const arrayBuffer = await blob.arrayBuffer();

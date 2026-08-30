@@ -58,13 +58,36 @@ export interface ResumeData {
     certifications?: Certification[];
 }
 
+export type ResumeKind = "base" | "tailored";
+
 export interface Resume {
     _id: string;
     userId: string;
     title: string;
     rawInput: string;
+    kind?: ResumeKind;
+    parentId?: string;
+    jobId?: string;
+    targetCompany?: string;
+    targetTitle?: string;
+    isPrimary?: boolean;
     jobDescription?: string;
     atsScore?: number;
+    atsAnalysis?: {
+        strengths?: string[];
+        improvements?: string[];
+        keywordMatches?: string[];
+    };
+    atsChecks?: Array<{
+        id: string;
+        label: string;
+        points: number;
+        max: number;
+        status: string;
+        detail: string;
+    }>;
+    matchedKeywords?: string[];
+    missingKeywords?: string[];
     resumeData: ResumeData;
     createdAt: number;
     updatedAt: number;

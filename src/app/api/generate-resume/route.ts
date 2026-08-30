@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { getAIClient, AI_DEPLOYMENT } from "@/lib/ai";
 import { computeATS } from "@/lib/ats";
+import { sanitizeAtsAnalysis, sanitizeResumeData } from "@/lib/resume-model";
+import { PARSE_RESUME_PROMPT, TAILOR_RESUME_PROMPT } from "@/lib/resume-prompts";
 import { ResumeData } from "@/lib/types";
 
 // Rate limiting
@@ -32,151 +34,7 @@ function checkRateLimit(userId: string): boolean {
 const MAX_RAW_INPUT_LENGTH = 50000;
 const MAX_JOB_DESCRIPTION_LENGTH = 20000;
 
-// =============================================================================
-// RESUME BUILDER - GPT-5-mini for fast, accurate fact extraction
-// =============================================================================
-const SYSTEM_PROMPT = `You are an expert resume parser. Your job is to CLEAN, PROCESS, and STRUCTURE resume information - NOT just copy raw text.
-
-## STEP 1: CLEAN THE INPUT FIRST
-Before extracting any information, you MUST clean the raw input:
-- Remove ALL special bullet characters: ○ ● ◦ ◆ ▪ ▫ ► ▸ ✓ ✔ → ➤ ➢ ★ ☆ ■ □
-- Remove weird symbols and replace with clean text
-- Fix broken spacing and formatting
-- Convert any bullet points to plain text sentences
-- Remove duplicate spaces, tabs, and excessive line breaks
-
-## STEP 2: PROCESS AND REWRITE
-- Rewrite bullet points as clean, professional sentences starting with action verbs
-- Don't copy raw text - process it into proper resume language
-- Ensure consistent formatting throughout
-
-## CRITICAL FORMATTING RULES
-1. ALWAYS use proper spacing in all text:
-   - "Heriot-Watt University" NOT "Heriot-WattUniversity"
-   - "Edinburgh Trams Limited" NOT "EdinburghTramsLimited"
-   - "Software Engineer" NOT "SoftwareEngineer"
-   - "New York, USA" NOT "NewYork,USA"
-
-2. Institution names: SEPARATE institution from location
-   - institution field: ONLY the university name, e.g., "Heriot-Watt University"
-   - location field: ONLY city and country, e.g., "Edinburgh, UK"
-   - DO NOT combine them - they go in separate fields
-
-3. Company names: Use proper formatting with spaces
-   - Example: "Edinburgh Trams Limited"
-   - Example: "IHG Hotels Management Limited"
-   - Example: "Amazon UK"
-
-4. Job titles: Use proper formatting with spaces
-   - Example: "Ticketing Service Assistant"
-   - Example: "Customer Service Associate"
-   - Example: "FC Administration Associate"
-
-5. Degree names: Use proper formatting
-   - Example: "MSc International Business Management"
-   - Example: "Bachelor of Business Administration"
-
-6. Highlights/bullet points: Write as CLEAN plain text only
-   - NO special characters like ○ ● ◦ ▪ ► etc - just plain text
-   - Start with strong action verb (Led, Developed, Managed, Achieved, etc.)
-   - Include metrics and numbers where possible
-   - Example: "Spearheaded cross-functional coordination with drivers during incidents"
-   - Example: "Increased sales by 25% through implementation of new CRM system"
-   - WRONG: "○ Led team..." or "• Managed..." - NO bullet characters in the text
-
-## Skills Categorization
-- Languages: Programming languages (Python, JavaScript, SQL, etc.)
-- Frameworks: Development frameworks (React, Node.js, Django, etc.)
-- Tools: Software tools (Git, Docker, AWS, Microsoft Office Suite, etc.)
-- Platforms: Development environments or platforms
-- Soft: Professional skills (Communication, Customer Service, Leadership, etc.)
-
-## LINK EXTRACTION - CRITICAL
-- ONLY include a link if an actual URL is provided in the input
-- If no URL is provided, set the link field to empty string ""
-- DO NOT make up or guess URLs - only extract what's actually there
-- Look for URLs like: https://..., http://..., github.com/..., linkedin.com/..., etc.
-
-## ATS ANALYSIS - LINK RECOMMENDATIONS
-In the atsAnalysis.improvements array, add recommendations for missing links:
-- If projects have no URLs: "Add GitHub/demo links to your projects - recruiters want to see your work"
-- If experience has no company URLs: "Consider adding company website links to verify your employment"
-- If certifications have no verification links: "Add certificate verification URLs to boost credibility"
-- If LinkedIn is missing: "Add your LinkedIn profile URL - most recruiters check LinkedIn"
-- If GitHub is missing for tech roles: "Add your GitHub profile to showcase your coding skills"
-
-## Output Format - RESPOND WITH ONLY VALID JSON:
-
-{
-  "resumeData": {
-    "fullName": "Full Name",
-    "email": "email@example.com",
-    "phone": "+44 XXXXXXXXXX",
-    "linkedin": "linkedin.com/in/username or empty if not provided",
-    "github": "github.com/username or empty if not provided",
-    "website": "",
-    "summary": "",
-    "education": [
-      {
-        "institution": "Heriot-Watt University",
-        "degree": "MSc International Business Management",
-        "location": "Edinburgh, UK",
-        "startDate": "January 2023",
-        "endDate": "June 2024",
-        "gpa": "2:1"
-      }
-    ],
-    "experience": [
-      {
-        "company": "Edinburgh Trams Limited",
-        "position": "Ticketing Service Assistant",
-        "location": "Edinburgh, UK",
-        "startDate": "June 2025",
-        "endDate": "Present",
-        "link": "ONLY if URL provided in input, otherwise empty string",
-        "highlights": ["Spearheaded cross-functional coordination with drivers and Operations Control Room during incidents"]
-      }
-    ],
-    "projects": [
-      {
-        "name": "Project Name",
-        "technologies": "Tech1, Tech2, Tech3",
-        "startDate": "Month Year",
-        "endDate": "Month Year",
-        "link": "ONLY if URL provided in input, otherwise empty string",
-        "highlights": ["Plain text achievement"]
-      }
-    ],
-    "skills": {
-      "languages": [],
-      "frameworks": [],
-      "tools": ["Microsoft Office Suite", "Tool2"],
-      "platforms": [],
-      "soft": ["Communication", "Customer Service"]
-    },
-    "certifications": [
-      {
-        "name": "Python for Data Science",
-        "issuer": "IBM",
-        "date": "January 2024",
-        "link": "ONLY if URL provided in input, otherwise empty string",
-        "highlights": []
-      }
-    ]
-  },
-  "atsAnalysis": {
-    "strengths": ["Strength 1"],
-    "improvements": ["Improvement 1"]
-  },
-  "suggestedTitle": "Job Title Resume"
-}
-
-DO NOT output an atsScore. The score is calculated from the extracted data, not
-estimated. Use atsAnalysis only for qualitative advice a calculation cannot give:
-what reads well, and what the person should rewrite or add.
-
-REMEMBER: All text must have proper spacing between words. Never concatenate words together.
-IMPORTANT: certifications must be an array of OBJECTS, not strings. Each certification needs name, issuer, date fields.`;
+// Prompts live in src/lib/resume-prompts.ts.
 
 // Normalize/fix common AI response issues
 function normalizeResumeData(data: Record<string, unknown>): Record<string, unknown> {
@@ -214,7 +72,7 @@ function normalizeResumeData(data: Record<string, unknown>): Record<string, unkn
 
   // Ensure skills object exists
   if (!resumeData.skills || typeof resumeData.skills !== 'object') {
-    resumeData.skills = { languages: [], frameworks: [], tools: [], platforms: [], soft: [] };
+    resumeData.skills = { languages: [], frameworks: [], tools: [], platforms: [], libraries: [], soft: [] };
   }
 
   // Ensure experience highlights are arrays
@@ -253,34 +111,50 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { rawInput, jobDescription } = body;
-
-    // Input validation
-    if (!rawInput || typeof rawInput !== "string") {
-      return NextResponse.json({ error: "Raw input is required" }, { status: 400 });
-    }
-
-    if (rawInput.length > MAX_RAW_INPUT_LENGTH) {
-      return NextResponse.json({ error: "Input too long" }, { status: 400 });
-    }
+    const { rawInput, jobDescription, resumeData: sourceResume, jobTitle, company } = body;
+    const mode = body.mode === "tailor" || (!rawInput && sourceResume && jobDescription)
+      ? "tailor"
+      : "parse";
 
     if (jobDescription && jobDescription.length > MAX_JOB_DESCRIPTION_LENGTH) {
       return NextResponse.json({ error: "Job description too long" }, { status: 400 });
     }
 
-    const userMessage = jobDescription
-      ? `Raw Resume Information:\n${rawInput.trim()}\n\n---\n\nJob Description to tailor for:\n${jobDescription.trim()}`
-      : `Raw Resume Information:\n${rawInput.trim()}`;
+    let systemPrompt = PARSE_RESUME_PROMPT;
+    let userMessage = "";
 
-    // Use GPT-5-mini for fast fact extraction
+    if (mode === "tailor") {
+      if (!sourceResume || typeof sourceResume !== "object") {
+        return NextResponse.json({ error: "A matching resume is required to tailor" }, { status: 400 });
+      }
+      if (!jobDescription || typeof jobDescription !== "string") {
+        return NextResponse.json({ error: "Job description is required to tailor" }, { status: 400 });
+      }
+      systemPrompt = TAILOR_RESUME_PROMPT;
+      userMessage = JSON.stringify({
+        resume: sourceResume,
+        jobTitle: typeof jobTitle === "string" ? jobTitle : "",
+        company: typeof company === "string" ? company : "",
+        jobDescription: jobDescription.trim(),
+      });
+    } else {
+      if (!rawInput || typeof rawInput !== "string") {
+        return NextResponse.json({ error: "Raw input is required" }, { status: 400 });
+      }
+      if (rawInput.length > MAX_RAW_INPUT_LENGTH) {
+        return NextResponse.json({ error: "Input too long" }, { status: 400 });
+      }
+      userMessage = `Raw Resume Information:\n${rawInput.trim()}`;
+    }
+
     const response = await getAIClient().chat.completions.create({
       model: AI_DEPLOYMENT,
       messages: [
-        { role: "system", content: SYSTEM_PROMPT },
+        { role: "system", content: systemPrompt },
         { role: "user", content: userMessage }
       ],
       max_completion_tokens: 8000,
-      response_format: { type: "json_object" }, // Enforce JSON output
+      response_format: { type: "json_object" },
     });
 
     const content = response.choices[0]?.message?.content;
@@ -292,15 +166,17 @@ export async function POST(request: NextRequest) {
     try {
       const parsed = JSON.parse(content);
       const normalized = normalizeResumeData(parsed) as Record<string, unknown>;
-      const resumeData = (normalized.resumeData ?? normalized) as ResumeData;
+      const resumeData = sanitizeResumeData(
+        (normalized.resumeData ?? normalized) as ResumeData,
+      );
 
       // The model occasionally returns a shell with every field blank. Saving
       // that produces a resume with no name, no contact details and no history,
       // so reject it here rather than persisting an empty record.
       const hasContent =
-        Boolean(resumeData?.fullName?.trim()) ||
-        (resumeData?.experience?.length ?? 0) > 0 ||
-        (resumeData?.education?.length ?? 0) > 0;
+        Boolean(resumeData.fullName.trim()) ||
+        resumeData.experience.length > 0 ||
+        resumeData.education.length > 0;
 
       if (!hasContent) {
         return NextResponse.json(
@@ -312,13 +188,28 @@ export async function POST(request: NextRequest) {
       // Score deterministically instead of trusting the number the model made
       // up: the same resume must always score the same, and every deduction
       // has to be explainable to the user.
-      const ats = computeATS(resumeData, jobDescription);
-      normalized.atsScore = ats.score;
-      normalized.atsChecks = ats.checks;
-      normalized.matchedKeywords = ats.matchedKeywords;
-      normalized.missingKeywords = ats.missingKeywords;
+      const ats = computeATS(resumeData, typeof jobDescription === "string" ? jobDescription : undefined);
+      const suggestedTitle =
+        (typeof normalized.suggestedTitle === "string" && normalized.suggestedTitle.trim()) ||
+        (mode === "tailor"
+          ? [jobTitle, company].filter((bit) => typeof bit === "string" && bit.trim()).join(" · ") || "Tailored resume"
+          : "Matching resume");
 
-      return NextResponse.json(normalized);
+      return NextResponse.json({
+        resumeData,
+        atsScore: ats.score,
+        atsChecks: ats.checks,
+        matchedKeywords: ats.matchedKeywords,
+        missingKeywords: ats.missingKeywords,
+        atsAnalysis: sanitizeAtsAnalysis(
+          normalized.atsAnalysis as {
+            strengths?: string[];
+            improvements?: string[];
+            keywordMatches?: string[];
+          } | undefined,
+        ),
+        suggestedTitle,
+      });
     } catch (parseError) {
       console.error("Failed to parse AI response:", parseError);
       return NextResponse.json({ error: "Failed to parse response" }, { status: 500 });

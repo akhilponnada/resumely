@@ -15,10 +15,9 @@ import { Spinner } from "@/components/ui/spinner";
 function headerTitle(pathname: string) {
   if (pathname.startsWith("/dashboard/chat")) return "AI Chat";
   if (pathname.startsWith("/dashboard/jobs")) return "Jobs";
-  if (pathname.startsWith("/dashboard/new")) return "Create resume";
-  if (pathname.startsWith("/dashboard/resumes") || pathname.startsWith("/resume/")) {
-    return "Resumes";
-  }
+  if (pathname.startsWith("/dashboard/new")) return "Add resume";
+  if (pathname.startsWith("/dashboard/resumes")) return "All resumes";
+  if (pathname.startsWith("/resume/")) return "Resume";
   if (pathname === "/dashboard") return "Dashboard";
   return "Resumely";
 }
@@ -27,7 +26,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const { user, isLoaded } = useUser();
   const router = useRouter();
   const pathname = usePathname();
-  const isChat = pathname.startsWith("/dashboard/chat");
+  const fillHeight =
+    pathname.startsWith("/dashboard/chat") || pathname.startsWith("/resume/");
 
   useEffect(() => {
     if (isLoaded && !user) {
@@ -62,7 +62,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </header>
         <div
           className={
-            isChat
+            fillHeight
               ? "flex min-h-0 flex-1 flex-col overflow-hidden"
               : "flex min-h-0 flex-1 flex-col"
           }

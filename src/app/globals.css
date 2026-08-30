@@ -161,6 +161,10 @@
   margin: 0 auto;
 }
 
+.resume-preview p {
+  margin: 0 0 4px;
+}
+
 .resume-preview h1 {
   font-size: 24pt;
   font-weight: bold;

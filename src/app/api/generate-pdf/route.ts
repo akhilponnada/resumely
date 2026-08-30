@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { generatePDF } from "@/lib/pdf-generator";
+import { sanitizeResumeData } from "@/lib/resume-model";
 import { ResumeData } from "@/lib/types";
 
 export const maxDuration = 60;
@@ -51,7 +52,7 @@ export async function POST(request: NextRequest) {
         // jsPDF draws real text runs rather than rasterising a screenshot, so the
         // output stays selectable and machine-readable - which is what ATS
         // parsers require.
-        const blob = await generatePDF(resumeData as ResumeData);
+        const blob = await generatePDF(sanitizeResumeData(resumeData as ResumeData));
         const arrayBuffer = await blob.arrayBuffer();
         const buffer = Buffer.from(arrayBuffer);
 

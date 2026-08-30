@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowUpRightIcon, BookmarkIcon, BriefcaseIcon, FileTextIcon, LogInIcon } from "lucide-react";
+import { ArrowUpRightIcon, BookmarkIcon, BriefcaseIcon, LogInIcon } from "lucide-react";
+import { TailorResumeButton } from "@/components/resume/tailor-resume-button";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -102,14 +103,12 @@ export function JobPreview({
                         </Button>
                     ) : null}
                     {signedIn ? (
-                        <Button
-                            nativeButton={false}
-                            render={<Link href={`/dashboard/new?job=${job._id}`} />}
-                            variant="outline"
-                        >
-                            <FileTextIcon data-icon="inline-start" />
-                            Tailor resume
-                        </Button>
+                        <TailorResumeButton
+                            jobId={job._id}
+                            title={job.title}
+                            company={job.company}
+                            descriptionText={job.descriptionText}
+                        />
                     ) : (
                         <Button
                             nativeButton={false}
@@ -129,7 +128,6 @@ export function JobPreview({
                 <div className="flex flex-col gap-5 p-5">
                     <MatchPanel
                         match={match}
-                        jobId={job._id}
                         resumeTitle={resumeTitle}
                         signedIn={signedIn}
                     />
